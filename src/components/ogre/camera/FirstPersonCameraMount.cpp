@@ -33,7 +33,7 @@ namespace Camera
 {
 
 FirstPersonCameraMount::FirstPersonCameraMount(const CameraSettings& cameraSettings, Ogre::SceneManager& sceneManager) :
-	CameraMountBase::CameraMountBase(cameraSettings), mCameraNode(0), mInvertCamera(false)
+	CameraMountBase(cameraSettings), mCameraNode(0), mInvertCamera(false)
 {
 	mCameraNode = sceneManager.createSceneNode(OgreInfo::createUniqueResourceName("FirstPersonCameraNode"));
 }
