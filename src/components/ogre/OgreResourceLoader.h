@@ -117,7 +117,7 @@ FileSystemArchiveFactory* mFileSystemArchiveFactory;
 
 	bool isExistingDir(const std::string& path) const;
 
-	void loadAllUnloadedSections();
+	void loadAllResources();
 
 };
 
