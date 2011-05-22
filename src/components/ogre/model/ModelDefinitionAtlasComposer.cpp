@@ -122,7 +122,7 @@ void ModelDefinitionAtlasComposer::composeToFile(Model* model, const std::string
 
 		if (!oslink::directory(dir).isExisting()) {
 			S_LOG_INFO("Creating directory " << dir);
-			mkdir(dir.c_str(), S_IRWXU);
+			oslink::directory::mkdir(dir.c_str());
 		}
 
 		const std::string fileName(dir + typeName + ".atlas");
