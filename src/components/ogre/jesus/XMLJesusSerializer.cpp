@@ -434,8 +434,8 @@ void XMLJesusSerializer::saveBlueprintToFile(Carpenter::BluePrint* blueprint, co
 		oslink::directory osdir(dir);
 
 		if (!osdir) {
-			oslink::directory::mkdir((EmberServices::getSingletonPtr()->getConfigService()->getHomeDirectory() + "carpenter").c_str(), S_IRWXU);
-			oslink::directory::mkdir(dir.c_str(), S_IRWXU);
+			oslink::directory::mkdir((EmberServices::getSingletonPtr()->getConfigService()->getHomeDirectory() + "carpenter").c_str());
+			oslink::directory::mkdir(dir.c_str());
 		}
 	
 	
