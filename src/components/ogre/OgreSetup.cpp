@@ -48,7 +48,9 @@
 #include "platform/platform_windows.h"
 #else
 #include "framework/binreloc.h"
+#ifndef __APPLE__
 #include <GL/glx.h>
+#endif
 #endif
 
 #ifdef _MSC_VER
@@ -317,7 +319,7 @@ bool OgreSetup::configure(void)
 	mRoot->getRenderSystem()->setConfigOption("Full Screen", "no");
 #endif // BUILD_WEBEMBER
 	if (success) {
-#if _WIN32
+#ifdef _WIN32
 		//this will only apply on DirectX
 		//it will force DirectX _not_ to set the FPU to single precision mode (since this will mess with mercator amongst others)
 		try {
@@ -482,8 +484,10 @@ bool OgreSetup::configure(void)
 		SDL_WM_SetCaption("Ember", "ember");
 
 #endif // !BUILD_WEBEMBER
+
 		Ogre::NameValuePairList misc;
 
+#ifndef __APPLE__
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);
 
@@ -502,9 +506,9 @@ bool OgreSetup::configure(void)
 		}
 		s += Ogre::StringConverter::toString((long)info.info.x11.window);
 		misc["parentWindowHandle"] = s;
-
-		// 	misc["currentGLContext"] = Ogre::String("True");
-
+#else
+		misc["currentGLContext"] = Ogre::String("True");
+#endif
 		// initialise root, without creating a window
 		mRoot->initialise(false);
 
@@ -986,7 +990,7 @@ bool OgreSetup::frameEnded(const Ogre::FrameEvent & evt)
 //Taken from sage.
 int OgreSetup::isExtensionSupported(const char *extension)
 {
-#ifndef WIN32
+#if !defined(_WIN32)  && !defined(__APPLE__)
 	SDL_SysWMinfo wmInfo;
 	SDL_VERSION(&wmInfo.version);
 	SDL_GetWMInfo(&wmInfo);
