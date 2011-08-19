@@ -9,7 +9,7 @@ AC_CONFIG_SRCDIR(src)
 AC_CANONICAL_SYSTEM
 
 #AM_INIT_AUTOMAKE([tar-ustar nostdinc dist-bzip2 check-news])
-AM_INIT_AUTOMAKE([tar-ustar nostdinc dist-bzip2 color-tests parallel-tests])
+AM_INIT_AUTOMAKE([tar-ustar nostdinc dist-bzip2])
 AM_CONFIG_HEADER(src/config.h)
 
 #AC_LIBTOOL_DLOPEN
@@ -19,7 +19,6 @@ AC_COPYRIGHT([This script is under the GPL and is owned by the people in AUTHORS
 
 #will disable verbose linking checks, which fail even if there is no problem.
 lt_cv_deplibs_check_method=pass_all
-LT_INIT
 
 
 # Checks for Programs
