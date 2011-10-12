@@ -387,6 +387,10 @@ void Application::start()
 		std::cout << "Error when setting up Ogre: " << ex.what() << std::endl;
 		S_LOG_CRITICAL("Error when setting up Ogre." << ex);
 		return;
+	} catch (const std::string& ex2) {
+		std::cout << "String exception catched: " << ex2 << std::endl;
+		S_LOG_WARNING("String exception catched: " << ex2);
+		return;
 	} catch (...) {
 		std::cout << "Unknown error when setting up Ogre." << std::endl;
 		S_LOG_CRITICAL("Unknown error when setting up Ogre.");
