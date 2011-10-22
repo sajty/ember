@@ -169,16 +169,16 @@ private:
 
 private:
 
-	std::auto_ptr<LoggingService> mLoggingService;
-	std::auto_ptr<ScriptingService> mScriptingService;
-	std::auto_ptr<SoundService> mSoundService;
-	std::auto_ptr<ServerService> mServerService;
-	std::auto_ptr<MetaserverService> mMetaserverService;
-	std::auto_ptr<InputService> mInputService;
-	std::auto_ptr<WfutService> mWfutService;
-	std::auto_ptr<ConfigService> mConfigService;
-	std::auto_ptr<Services::Time> mTimeService;
-	std::auto_ptr<Services::ServerSettings> mServerSettingsService;
+	LoggingService* mLoggingService;
+	ScriptingService* mScriptingService;
+	SoundService* mSoundService;
+	ServerService* mServerService;
+	MetaserverService* mMetaserverService;
+	InputService* mInputService;
+	WfutService* mWfutService;
+	ConfigService* mConfigService;
+	Services::Time* mTimeService;
+	Services::ServerSettings* mServerSettingsService;
 
 };
 }
