@@ -37,23 +37,19 @@ ConsoleCommandWrapper::ConsoleCommandWrapper(std::string command, ConsoleObject 
 	if (mCommand.size() > 0 && mCommand[0] == '+') {
 		mInverseCommand = std::string("-") + std::string(mCommand).erase(0, 1);
 	}
-	if (ConsoleBackend::getSingletonPtr()) {
-		ConsoleBackend::getSingletonPtr()->registerCommand(mCommand, object, mDescription, suppressLogging);
-		if (mInverseCommand != "") {
-			ConsoleBackend::getSingletonPtr()->registerCommand(mInverseCommand, object, std::string("Releases the command ") + mCommand, suppressLogging);
-		}
-	} else {
-		S_LOG_WARNING("Could not register command "<< command << " since there was no console backend.");
+	ConsoleBackend& consoleBackend = ConsoleBackend::getSingleton();
+	consoleBackend.registerCommand(mCommand, object, mDescription, suppressLogging);
+	if (mInverseCommand != "") {
+		consoleBackend.registerCommand(mInverseCommand, object, std::string("Releases the command ") + mCommand, suppressLogging);
 	}
 }
 
 ConsoleCommandWrapper::~ConsoleCommandWrapper()
 {
-	if (ConsoleBackend::getSingletonPtr()) {
-		ConsoleBackend::getSingletonPtr()->deregisterCommand(mCommand, mSuppressLogging);
-		if (mInverseCommand != "") {
-			ConsoleBackend::getSingletonPtr()->deregisterCommand(mInverseCommand, mSuppressLogging);
-		}
+	ConsoleBackend& consoleBackend = ConsoleBackend::getSingleton();
+	consoleBackend.deregisterCommand(mCommand, mSuppressLogging);
+	if (mInverseCommand != "") {
+		consoleBackend.deregisterCommand(mInverseCommand, mSuppressLogging);
 	}
 }
 

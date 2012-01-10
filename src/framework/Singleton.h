@@ -64,7 +64,7 @@ namespace Ember {
 		}
 		
 		~Singleton( void )
-		{  
+		{
 			assert( ms_Singleton );
 			ms_Singleton = 0;
 		}
@@ -74,9 +74,9 @@ namespace Ember {
 		 * @return The singleton instance.
 		 */
 		static T& getSingleton( void )
-		{	
-			assert( ms_Singleton );  
-			return ( *ms_Singleton ); 
+		{
+			assert( ms_Singleton );
+			return ( *ms_Singleton );
 		}
 		
 		/**
@@ -84,9 +84,8 @@ namespace Ember {
 		 * @return A pointer to the singleton instance.
 		 */
 		static T* getSingletonPtr( void )
-		{ 
-			assert( ms_Singleton ); 
-			return ms_Singleton; 
+		{
+			return ms_Singleton;
 		}
 		
 		/**

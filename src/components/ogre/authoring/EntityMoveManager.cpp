@@ -103,7 +103,7 @@ void EntityMoveManager::runCommand(const std::string &command, const std::string
 				startMove(*entity);
 			}
 		} else {
-			ConsoleBackend::getSingletonPtr()->pushMessage("You must specify a valid entity id to move.", "error");
+			ConsoleBackend::getSingleton().pushMessage("You must specify a valid entity id to move.", "error");
 		}
 
 	}

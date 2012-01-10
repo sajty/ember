@@ -659,8 +659,7 @@ void ImpostorTexture::renderTextures(bool force)
 	String texName2(renderTexture->getName());
 
 	renderTexture.setNull();
-	if (TextureManager::getSingletonPtr())
-		TextureManager::getSingleton().remove(texName2);
+	TextureManager::getSingleton().remove(texName2);
 #endif
 }
 
