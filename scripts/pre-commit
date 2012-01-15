@@ -1,0 +1,50 @@
+#!/bin/sh
+ 
+# This git hook will run uncrustify formatter before every commit on changed files.
+
+set -e
+
+# Read executable name from $UNCRUSTIFY environment variable, else fall back to "uncrustify".
+if [ x"$UNCRUSTIFY" = x"" ] ; then
+    UNCRUSTIFY="uncrustify"
+fi
+
+if [ x"$UNCRUSTIFY_CFG" = x"" ] ; then
+    UNCRUSTIFY_CFG="scripts/uncrustify.cfg"
+fi
+
+if git-rev-parse --verify HEAD >/dev/null 2>&1; then
+    against=HEAD
+else
+    # This is the initial tree commit. It's the same on all repos!
+    against=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+fi
+ 
+for FILE in `git diff-index --name-status $against -- | cut -c3-` ; do
+
+    filename=$(basename "$FILE")
+    extension=${filename##*.}
+
+    # Force lowercase for case-insensitivity.
+    extension=`echo "$extension" | tr "[:upper:]" "[:lower:]"`
+
+    # Only format *.cpp and *.h files.
+    if [ x"$extension" = x"cpp" -o x"$extension" = x"h" ]; then
+
+        echo "Running uncrustify on '$FILE'."
+        $UNCRUSTIFY -c "$UNCRUSTIFY_CFG" --no-backup "$FILE"
+        if [ $? -ne 0 ]; then
+            echo "Failed to run uncrustify on '$FILE'!"
+            exit 1
+        fi
+        
+        #update contact info
+        if [ "`echo $OSTYPE | grep darwin`" != "" ] ; then
+            sed -i "" -e 's/Erik\ Hjortsberg/Erik Ogenvik/g' -e 's/erik.hjortsberg@gmail.com/erik@ogenvik.org/g' "$FILE"
+        else
+            sed -i -e 's/Erik\ Hjortsberg/Erik Ogenvik/g' -e 's/erik.hjortsberg@gmail.com/erik@ogenvik.org/g' "$FILE"
+        fi
+    fi
+    
+done
+exit
