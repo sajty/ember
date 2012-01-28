@@ -373,7 +373,7 @@ Eris::View* Application::getMainView()
 void Application::start()
 {
 	try {
-		if (!mOgreView->setup(Input::getSingleton(), mMainLoopController)) {
+		if (!mOgreView->setup()) {
 			//The setup was cancelled, return.
 			return;
 		}

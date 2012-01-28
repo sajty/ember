@@ -76,7 +76,8 @@ namespace OgreView
 {
 
 OgreSetup::OgreSetup() :
-		DiagnoseOgre("diagnoseOgre", this, "Diagnoses the current Ogre state and writes the output to the log."), mRoot(0), mRenderWindow(0), mSceneManagerFactory(0), mMeshSerializerListener(0)
+	mRenderWindow(0), mSceneManagerFactory(0), mMeshSerializerListener(0), mRoot(0),
+	DiagnoseOgre("diagnoseOgre", this, "Diagnoses the current Ogre state and writes the output to the log.")
 {
 }
 
@@ -119,7 +120,7 @@ void OgreSetup::shutdown()
 
 }
 
-Ogre::Root* OgreSetup::createOgreSystem()
+void OgreSetup::createOgreSystem()
 {
 	ConfigService& configSrv(EmberServices::getSingleton().getConfigService());
 
@@ -216,8 +217,6 @@ Ogre::Root* OgreSetup::createOgreSystem()
 	if (chdir(configSrv.getEmberDataDirectory().c_str())) {
 		S_LOG_WARNING("Failed to change to the data directory '" << configSrv.getEmberDataDirectory() << "'.");
 	}
-
-	return mRoot;
 }
 
 /**
@@ -244,7 +243,7 @@ extern "C" void shutdownHandler(int sig)
 bool OgreSetup::configure(void)
 {
 	
-	ConfigService& configService(EmberServices::getSingleton().getConfigService());
+	ConfigService& configService = EmberServices::getSingleton().getConfigService();
 #ifndef BUILD_WEBEMBER
 	bool success = false;
 	bool suppressConfig = false;

@@ -145,25 +145,12 @@ public:
 	~EmberOgre();
 
 	/**
-	 * @brief Gets the Ogre root object.
-	 *
-	 * @return The Ogre root object, which acts as an entry point for most of Ogre.
-	 */
-	Ogre::Root* getOgreRoot() const;
-
-	/**
 	 * @brief Gets the shader manager, which handles setup of the graphic level and the shaders.
 	 *
 	 * @return The shader manager.
 	 */
 	ShaderManager* getShaderManager() const;
 
-	/**
-	 * @brief Returns the main Jesus object, which should be used as the main entry into the Jesus subsystem.
-	 *
-	 * @return The main Jesus instance.
-	 */
-	//	Jesus* getJesus() const;
 	/**
 	 * @brief Gets the main render window.
 	 *
@@ -187,10 +174,6 @@ public:
 	World* getWorld() const;
 
 	/**
-	 * @brief Emitted when the Jesus subsystem has been created.
-	 */
-	//	sigc::signal<void, Jesus*> EventCreatedJesus;
-	/**
 	 * @brief Renders one frame.
 	 * @return True if rendering occurred.
 	 */
@@ -198,11 +181,9 @@ public:
 
 	/**
 	 * @brief Sets up the application - returns false if the user chooses to abandon configuration.
-	 * @param input The main input.
-	 * @param mainLoopController The main loop instance.
-	 * @return True if setup was successful.
+	 * @returns False if the user has pressed cancel on the configure window.
 	 */
-	bool setup(Input& input, MainLoopController& mainLoopController);
+	bool setup();
 
 	/**
 	 * @brief Shuts down the gui.
@@ -220,19 +201,9 @@ public:
 protected:
 
 	/**
-	 * @brief The main input.
-	 */
-	Input* mInput;
-
-	/**
 	 * @brief Utility object for setting up and tearing down ogre
 	 */
-	std::auto_ptr<OgreSetup> mOgreSetup;
-
-	/**
-	 * @brief The main Ogre root object. All of Ogre is accessed through this.
-	 */
-	Ogre::Root *mRoot;
+	OgreSetup* mOgreSetup;
 
 	/**
 	 * @brief The main scene manager of the world.
@@ -259,7 +230,7 @@ protected:
 	/**
 	 * @brief An InputCommandMapper that will handle all general input events.
 	 */
-	std::auto_ptr<InputCommandMapper> mGeneralCommandMapper;
+	InputCommandMapper* mGeneralCommandMapper;
 
 	/**
 	 * @brief Responsible for handling sound loading
@@ -292,12 +263,6 @@ protected:
 	Authoring::EntityRecipeManager* mEntityRecipeManager;
 
 	/**
-	 * @brief Main entry point for the Jesus system (which is an Ember wrapper for the Carpenter lib)
-	 *
-	 * @note The Jesus and Carpenter system hasn't been touched in quite a while, and it's not certain that it will remain in Ember.
-	 */
-	//	Jesus* mJesus;
-	/**
 	 * @brief The main log observer used for all logging. This will send Ogre logging events on to the internal Ember logging framework.
 	 */
 	OgreLogObserver* mLogObserver;
@@ -315,21 +280,13 @@ protected:
 	/**
 	 * @brief The scripting resource provider, which loads scripts using the Ogre resource system.
 	 */
-	std::auto_ptr<OgreResourceProvider> mScriptingResourceProvider;
+	OgreResourceProvider* mScriptingResourceProvider;
 
 	/**
 	 * @brief The sound resource provider, which loads sounds using the Ogre resource system.
 	 */
-	std::auto_ptr<OgreResourceProvider> mSoundResourceProvider;
+	OgreResourceProvider* mSoundResourceProvider;
 
-	/**
-	 * @brief The collision manager, responsible for handling collisions of the geometry in the world.
-	 */
-	//	OgreOpcode::CollisionManager* mCollisionManager;
-	/**
-	 * @brief Responsible for visualizing collisions.
-	 */
-	//	OpcodeCollisionDetectorVisualizer* mCollisionDetectorVisualizer;
 	/**
 	 * @brief Handles loading of resources.
 	 *
@@ -388,10 +345,6 @@ protected:
 	 */
 	void EntityFactory_BeingDeleted();
 
-	/**
-	 * @brief Sets up Jesus. This inialized the mJesus member and loads all building blocks, blueprint and modelblocks etc.
-	 */
-	//	void setupJesus();
 	/**
 	 * @brief Preloads the media, thus avoiding frame rate drops ingame.
 	 *

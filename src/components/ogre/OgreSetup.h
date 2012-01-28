@@ -55,7 +55,7 @@ public:
 	* Creates the Ogre base system.
 	* @return The new Ogre Root object.
 	*/
-	Ogre::Root* createOgreSystem();
+	void createOgreSystem();
 
 	/**
 	 * @brief Configures the application - returns false if the user chooses to abandon configuration.
@@ -68,12 +68,6 @@ public:
 	 * @return The render window.
 	 */
 	Ogre::RenderWindow* getRenderWindow() const;
-
-	/**
-	* @brief Gets the Ogre root object.
-	* @return The root object.
-	*/
-	Ogre::Root* getRoot() const;
 
 	/**
 	 * @brief Chooses and sets up the correct scene manager.
@@ -129,11 +123,6 @@ private:
 	int isExtensionSupported(const char *extension);
 
 };
-
-inline Ogre::Root* OgreSetup::getRoot() const
-{
-	return mRoot;
-}
 
 inline Ogre::RenderWindow* OgreSetup::getRenderWindow() const
 {
