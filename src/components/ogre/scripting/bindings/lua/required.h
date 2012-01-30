@@ -1,4 +1,4 @@
-#include <SDL.h>
+#include <OISKeyboard.h>
 
 #include <sigc++/sigc++.h>
 

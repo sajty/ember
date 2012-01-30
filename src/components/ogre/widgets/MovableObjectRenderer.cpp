@@ -118,7 +118,7 @@ MovableObjectRenderer::~MovableObjectRenderer()
 bool MovableObjectRenderer::injectMouseMove(const MouseMotion& motion, bool& freezeMouse)
 {
 	//rotate the modelnode
-	if (Input::getSingleton().isKeyDown(SDLK_RCTRL) || Input::getSingleton().isKeyDown(SDLK_LCTRL)) {
+	if (Input::getSingleton().isModifierDown(OIS::Keyboard::Ctrl)) {
 		mTexture->getRenderContext()->roll(Ogre::Degree(motion.xRelativeMovement * 180));
 	} else {
 		mTexture->getRenderContext()->yaw(Ogre::Degree(motion.xRelativeMovement * 180));
@@ -159,6 +159,8 @@ bool MovableObjectRenderer::injectMouseButtonUp(const Input::MouseButton& button
 {
 	if (button == Input::MouseButtonLeft) {
 		releaseInput();
+		//we need to return false, because we have removed the current interface and we are iterating on it.
+		return false;
 	}
 	return true;
 }
@@ -173,12 +175,12 @@ bool MovableObjectRenderer::injectChar(char character)
 	return true;
 }
 
-bool MovableObjectRenderer::injectKeyDown(const SDLKey& key)
+bool MovableObjectRenderer::injectKeyDown(const OIS::KeyCode& key)
 {
 	return true;
 }
 
-bool MovableObjectRenderer::injectKeyUp(const SDLKey& key)
+bool MovableObjectRenderer::injectKeyUp(const OIS::KeyCode& key)
 {
 	return true;
 }

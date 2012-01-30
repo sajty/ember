@@ -39,110 +39,110 @@ mGuiSystem(system)
 , mSelectedText(0)
 {
 
-	//lookup table for sdl scancodes and CEGUI keys
-	mKeyMap[SDLK_BACKSPACE] = CEGUI::Key::Backspace;
-	mKeyMap[SDLK_TAB] = CEGUI::Key::Tab;
-/*	mKeyMap[SDLK_CLEAR] = CEGUI::Key::Clear;*/
-	mKeyMap[SDLK_RETURN] = CEGUI::Key::Return;
-	mKeyMap[SDLK_PAUSE] = CEGUI::Key::Pause;
-	mKeyMap[SDLK_ESCAPE] = CEGUI::Key::Escape;
-	mKeyMap[SDLK_SPACE] = CEGUI::Key::Space;
-/*	mKeyMap[SDLK_EXCLAIM] = CEGUI::Key::Exclaim;*/
-/*	mKeyMap[SDLK_QUOTEDBL] = CEGUI::Key::;
-	mKeyMap[SDLK_HASH] = CEGUI::Key::;
-	mKeyMap[SDLK_DOLLAR] = CEGUI::Key::;
-	mKeyMap[SDLK_AMPERSAND] = CEGUI::Key::;
-	mKeyMap[SDLK_QUOTE] = CEGUI::Key::;
-	mKeyMap[SDLK_LEFTPAREN] = CEGUI::Key::;
-	mKeyMap[SDLK_RIGHTPAREN] = CEGUI::Key::;
-	mKeyMap[SDLK_ASTERISK] = CEGUI::Key::;*/
-	mKeyMap[SDLK_PLUS] = CEGUI::Key::Add;
-/*	mKeyMap[SDLK_COMMA] = CEGUI::Key::;*/
-	mKeyMap[SDLK_MINUS] = CEGUI::Key::Minus;
-	mKeyMap[SDLK_PERIOD] = CEGUI::Key::Period;
-/*	mKeyMap[SDLK_SLASH] = CEGUI::Key::;*/
-	mKeyMap[SDLK_0] = CEGUI::Key::One;
-	mKeyMap[SDLK_1] = CEGUI::Key::Two;
-	mKeyMap[SDLK_2] = CEGUI::Key::Two;
-	mKeyMap[SDLK_3] = CEGUI::Key::Three;
-	mKeyMap[SDLK_4] = CEGUI::Key::Four;
-	mKeyMap[SDLK_5] = CEGUI::Key::Five;
-	mKeyMap[SDLK_6] = CEGUI::Key::Six;
-	mKeyMap[SDLK_7] = CEGUI::Key::Seven;
-	mKeyMap[SDLK_8] = CEGUI::Key::Eight;
-	mKeyMap[SDLK_9] = CEGUI::Key::Nine;
-	mKeyMap[SDLK_COLON] = CEGUI::Key::Colon;
-	mKeyMap[SDLK_SEMICOLON] = CEGUI::Key::Semicolon;
-/*	mKeyMap[SDLK_LESS] = CEGUI::Key::;*/
-/*	mKeyMap[SDLK_EQUALS] = CEGUI::Key::;
-	mKeyMap[SDLK_GREATER] = CEGUI::Key::;
-	mKeyMap[SDLK_QUESTION] = CEGUI::Key::;*/
-/*	mKeyMap[SDLK_AT] = CEGUI::Key::;*/
-/*	mKeyMap[SDLK_LEFTBRACKET] = CEGUI::Key::;*/
-	mKeyMap[SDLK_BACKSLASH] = CEGUI::Key::Backslash;
-/*	mKeyMap[SDLK_RIGHTBRACKET] = CEGUI::Key::;*/
-/*	mKeyMap[SDLK_CARET] = CEGUI::Key::;
-	mKeyMap[SDLK_UNDERSCORE] = CEGUI::Key::;
-	mKeyMap[SDLK_BACKQUOTE] = CEGUI::Key::;*/
-	mKeyMap[SDLK_a] = CEGUI::Key::A;
-	mKeyMap[SDLK_b] = CEGUI::Key::B;
-	mKeyMap[SDLK_c] = CEGUI::Key::C;
-	mKeyMap[SDLK_d] = CEGUI::Key::D;
-	mKeyMap[SDLK_e] = CEGUI::Key::E;
-	mKeyMap[SDLK_f] = CEGUI::Key::F;
-	mKeyMap[SDLK_g] = CEGUI::Key::G;
-	mKeyMap[SDLK_h] = CEGUI::Key::H;
-	mKeyMap[SDLK_i] = CEGUI::Key::I;
-	mKeyMap[SDLK_j] = CEGUI::Key::J;
-	mKeyMap[SDLK_k] = CEGUI::Key::K;
-	mKeyMap[SDLK_l] = CEGUI::Key::L;
-	mKeyMap[SDLK_m] = CEGUI::Key::M;
-	mKeyMap[SDLK_n] = CEGUI::Key::N;
-	mKeyMap[SDLK_o] = CEGUI::Key::O;
-	mKeyMap[SDLK_p] = CEGUI::Key::P;
-	mKeyMap[SDLK_q] = CEGUI::Key::Q;
-	mKeyMap[SDLK_r] = CEGUI::Key::R;
-	mKeyMap[SDLK_s] = CEGUI::Key::S;
-	mKeyMap[SDLK_t] = CEGUI::Key::T;
-	mKeyMap[SDLK_u] = CEGUI::Key::U;
-	mKeyMap[SDLK_v] = CEGUI::Key::V;
-	mKeyMap[SDLK_w] = CEGUI::Key::W;
-	mKeyMap[SDLK_x] = CEGUI::Key::X;
-	mKeyMap[SDLK_y] = CEGUI::Key::Y;
-	mKeyMap[SDLK_z] = CEGUI::Key::Z;
-	mKeyMap[SDLK_DELETE] = CEGUI::Key::Delete;
-	mKeyMap[SDLK_UP] = CEGUI::Key::ArrowUp;
-	mKeyMap[SDLK_DOWN] = CEGUI::Key::ArrowDown;
-	mKeyMap[SDLK_RIGHT] = CEGUI::Key::ArrowRight;
-	mKeyMap[SDLK_LEFT] = CEGUI::Key::ArrowLeft;
-	mKeyMap[SDLK_INSERT] = CEGUI::Key::Insert;
-	mKeyMap[SDLK_HOME] = CEGUI::Key::Home;
-	mKeyMap[SDLK_END] = CEGUI::Key::End;
-	mKeyMap[SDLK_PAGEUP] = CEGUI::Key::PageUp;
-	mKeyMap[SDLK_PAGEDOWN] = CEGUI::Key::PageDown;
-	mKeyMap[SDLK_F1] = CEGUI::Key::F1;
-	mKeyMap[SDLK_F2] = CEGUI::Key::F2;
-	mKeyMap[SDLK_F3] = CEGUI::Key::F3;
-	mKeyMap[SDLK_F4] = CEGUI::Key::F4;
-	mKeyMap[SDLK_F5] = CEGUI::Key::F5;
-	mKeyMap[SDLK_F6] = CEGUI::Key::F6;
-	mKeyMap[SDLK_F7] = CEGUI::Key::F7;
-	mKeyMap[SDLK_F8] = CEGUI::Key::F8;
-	mKeyMap[SDLK_F9] = CEGUI::Key::F9;
-	mKeyMap[SDLK_F10] = CEGUI::Key::F10;
-	mKeyMap[SDLK_F11] = CEGUI::Key::F11;
-	mKeyMap[SDLK_F12] = CEGUI::Key::F12;
-	mKeyMap[SDLK_F13] = CEGUI::Key::F13;
-	mKeyMap[SDLK_F14] = CEGUI::Key::F14;
-	mKeyMap[SDLK_F15] = CEGUI::Key::F15;
-	mKeyMap[SDLK_NUMLOCK] = CEGUI::Key::NumLock;
-	mKeyMap[SDLK_SCROLLOCK] = CEGUI::Key::ScrollLock;
-	mKeyMap[SDLK_RSHIFT] = CEGUI::Key::RightShift;
-	mKeyMap[SDLK_LSHIFT] = CEGUI::Key::LeftShift;
-	mKeyMap[SDLK_RCTRL] = CEGUI::Key::RightControl;
-	mKeyMap[SDLK_LCTRL] = CEGUI::Key::LeftControl;
-	mKeyMap[SDLK_RALT] = CEGUI::Key::RightAlt;
-	mKeyMap[SDLK_LALT] = CEGUI::Key::LeftAlt;
+	//lookup table for OIS scancodes and CEGUI keys
+	mKeyMap[OIS::KC_BACK] = CEGUI::Key::Backspace;
+	mKeyMap[OIS::KC_TAB] = CEGUI::Key::Tab;
+/*	mKeyMap[OIS::KC_CLEAR] = CEGUI::Key::Clear;*/
+	mKeyMap[OIS::KC_RETURN] = CEGUI::Key::Return;
+	mKeyMap[OIS::KC_PAUSE] = CEGUI::Key::Pause;
+	mKeyMap[OIS::KC_ESCAPE] = CEGUI::Key::Escape;
+	mKeyMap[OIS::KC_SPACE] = CEGUI::Key::Space;
+/*	mKeyMap[OIS::KC_EXCLAIM] = CEGUI::Key::Exclaim;*/
+/*	mKeyMap[OIS::KC_QUOTEDBL] = CEGUI::Key::;
+	mKeyMap[OIS::KC_HASH] = CEGUI::Key::;
+	mKeyMap[OIS::KC_DOLLAR] = CEGUI::Key::;
+	mKeyMap[OIS::KC_AMPERSAND] = CEGUI::Key::;
+	mKeyMap[OIS::KC_QUOTE] = CEGUI::Key::;
+	mKeyMap[OIS::KC_LEFTPAREN] = CEGUI::Key::;
+	mKeyMap[OIS::KC_RIGHTPAREN] = CEGUI::Key::;
+	mKeyMap[OIS::KC_ASTERISK] = CEGUI::Key::;*/
+	mKeyMap[OIS::KC_ADD] = CEGUI::Key::Add;
+/*	mKeyMap[OIS::KC_COMMA] = CEGUI::Key::;*/
+	mKeyMap[OIS::KC_MINUS] = CEGUI::Key::Minus;
+	mKeyMap[OIS::KC_PERIOD] = CEGUI::Key::Period;
+/*	mKeyMap[OIS::KC_SLASH] = CEGUI::Key::;*/
+	mKeyMap[OIS::KC_0] = CEGUI::Key::One;
+	mKeyMap[OIS::KC_1] = CEGUI::Key::Two;
+	mKeyMap[OIS::KC_2] = CEGUI::Key::Two;
+	mKeyMap[OIS::KC_3] = CEGUI::Key::Three;
+	mKeyMap[OIS::KC_4] = CEGUI::Key::Four;
+	mKeyMap[OIS::KC_5] = CEGUI::Key::Five;
+	mKeyMap[OIS::KC_6] = CEGUI::Key::Six;
+	mKeyMap[OIS::KC_7] = CEGUI::Key::Seven;
+	mKeyMap[OIS::KC_8] = CEGUI::Key::Eight;
+	mKeyMap[OIS::KC_9] = CEGUI::Key::Nine;
+	mKeyMap[OIS::KC_COLON] = CEGUI::Key::Colon;
+	mKeyMap[OIS::KC_SEMICOLON] = CEGUI::Key::Semicolon;
+/*	mKeyMap[OIS::KC_LESS] = CEGUI::Key::;*/
+/*	mKeyMap[OIS::KC_EQUALS] = CEGUI::Key::;
+	mKeyMap[OIS::KC_GREATER] = CEGUI::Key::;
+	mKeyMap[OIS::KC_QUESTION] = CEGUI::Key::;*/
+/*	mKeyMap[OIS::KC_AT] = CEGUI::Key::;*/
+/*	mKeyMap[OIS::KC_LEFTBRACKET] = CEGUI::Key::;*/
+	mKeyMap[OIS::KC_BACKSLASH] = CEGUI::Key::Backslash;
+/*	mKeyMap[OIS::KC_RIGHTBRACKET] = CEGUI::Key::;*/
+/*	mKeyMap[OIS::KC_CARET] = CEGUI::Key::;
+	mKeyMap[OIS::KC_UNDERSCORE] = CEGUI::Key::;
+	mKeyMap[OIS::KC_BACKQUOTE] = CEGUI::Key::;*/
+	mKeyMap[OIS::KC_A] = CEGUI::Key::A;
+	mKeyMap[OIS::KC_B] = CEGUI::Key::B;
+	mKeyMap[OIS::KC_C] = CEGUI::Key::C;
+	mKeyMap[OIS::KC_D] = CEGUI::Key::D;
+	mKeyMap[OIS::KC_E] = CEGUI::Key::E;
+	mKeyMap[OIS::KC_F] = CEGUI::Key::F;
+	mKeyMap[OIS::KC_G] = CEGUI::Key::G;
+	mKeyMap[OIS::KC_H] = CEGUI::Key::H;
+	mKeyMap[OIS::KC_I] = CEGUI::Key::I;
+	mKeyMap[OIS::KC_J] = CEGUI::Key::J;
+	mKeyMap[OIS::KC_K] = CEGUI::Key::K;
+	mKeyMap[OIS::KC_L] = CEGUI::Key::L;
+	mKeyMap[OIS::KC_M] = CEGUI::Key::M;
+	mKeyMap[OIS::KC_N] = CEGUI::Key::N;
+	mKeyMap[OIS::KC_O] = CEGUI::Key::O;
+	mKeyMap[OIS::KC_P] = CEGUI::Key::P;
+	mKeyMap[OIS::KC_Q] = CEGUI::Key::Q;
+	mKeyMap[OIS::KC_R] = CEGUI::Key::R;
+	mKeyMap[OIS::KC_S] = CEGUI::Key::S;
+	mKeyMap[OIS::KC_T] = CEGUI::Key::T;
+	mKeyMap[OIS::KC_U] = CEGUI::Key::U;
+	mKeyMap[OIS::KC_V] = CEGUI::Key::V;
+	mKeyMap[OIS::KC_W] = CEGUI::Key::W;
+	mKeyMap[OIS::KC_X] = CEGUI::Key::X;
+	mKeyMap[OIS::KC_Y] = CEGUI::Key::Y;
+	mKeyMap[OIS::KC_Z] = CEGUI::Key::Z;
+	mKeyMap[OIS::KC_DELETE] = CEGUI::Key::Delete;
+	mKeyMap[OIS::KC_UP] = CEGUI::Key::ArrowUp;
+	mKeyMap[OIS::KC_DOWN] = CEGUI::Key::ArrowDown;
+	mKeyMap[OIS::KC_RIGHT] = CEGUI::Key::ArrowRight;
+	mKeyMap[OIS::KC_LEFT] = CEGUI::Key::ArrowLeft;
+	mKeyMap[OIS::KC_INSERT] = CEGUI::Key::Insert;
+	mKeyMap[OIS::KC_HOME] = CEGUI::Key::Home;
+	mKeyMap[OIS::KC_END] = CEGUI::Key::End;
+	mKeyMap[OIS::KC_PGUP] = CEGUI::Key::PageUp;
+	mKeyMap[OIS::KC_PGDOWN] = CEGUI::Key::PageDown;
+	mKeyMap[OIS::KC_F1] = CEGUI::Key::F1;
+	mKeyMap[OIS::KC_F2] = CEGUI::Key::F2;
+	mKeyMap[OIS::KC_F3] = CEGUI::Key::F3;
+	mKeyMap[OIS::KC_F4] = CEGUI::Key::F4;
+	mKeyMap[OIS::KC_F5] = CEGUI::Key::F5;
+	mKeyMap[OIS::KC_F6] = CEGUI::Key::F6;
+	mKeyMap[OIS::KC_F7] = CEGUI::Key::F7;
+	mKeyMap[OIS::KC_F8] = CEGUI::Key::F8;
+	mKeyMap[OIS::KC_F9] = CEGUI::Key::F9;
+	mKeyMap[OIS::KC_F10] = CEGUI::Key::F10;
+	mKeyMap[OIS::KC_F11] = CEGUI::Key::F11;
+	mKeyMap[OIS::KC_F12] = CEGUI::Key::F12;
+	mKeyMap[OIS::KC_F13] = CEGUI::Key::F13;
+	mKeyMap[OIS::KC_F14] = CEGUI::Key::F14;
+	mKeyMap[OIS::KC_F15] = CEGUI::Key::F15;
+	mKeyMap[OIS::KC_NUMLOCK] = CEGUI::Key::NumLock;
+	mKeyMap[OIS::KC_SCROLL] = CEGUI::Key::ScrollLock;
+	mKeyMap[OIS::KC_RSHIFT] = CEGUI::Key::RightShift;
+	mKeyMap[OIS::KC_LSHIFT] = CEGUI::Key::LeftShift;
+	mKeyMap[OIS::KC_RCONTROL] = CEGUI::Key::RightControl;
+	mKeyMap[OIS::KC_LCONTROL] = CEGUI::Key::LeftControl;
+	mKeyMap[OIS::KC_RMENU] = CEGUI::Key::RightAlt;
+	mKeyMap[OIS::KC_LMENU] = CEGUI::Key::LeftAlt;
 
 
 	//set up the capturing of text selected event for the copy-and-paste functionality
@@ -283,10 +283,10 @@ bool GUICEGUIAdapter::injectChar(char character)
 
 }
 
-bool GUICEGUIAdapter::injectKeyDown(const SDLKey& key)
+bool GUICEGUIAdapter::injectKeyDown(const OIS::KeyCode& key)
 {
 	try {
-		SDLKeyMap::const_iterator I =  mKeyMap.find(key);
+		OISKeyMap::const_iterator I =  mKeyMap.find(key);
 		if (I != mKeyMap.end())  {
 			unsigned int scanCode = I->second;
 			mGuiSystem->injectKeyDown(scanCode);
@@ -298,10 +298,10 @@ bool GUICEGUIAdapter::injectKeyDown(const SDLKey& key)
 
 }
 
-bool GUICEGUIAdapter::injectKeyUp(const SDLKey& key)
+bool GUICEGUIAdapter::injectKeyUp(const OIS::KeyCode& key)
 {
 	try {
-		SDLKeyMap::const_iterator I =  mKeyMap.find(key);
+		OISKeyMap::const_iterator I =  mKeyMap.find(key);
 		if (I != mKeyMap.end())  {
 			unsigned int scanCode = I->second;
 			mGuiSystem->injectKeyUp(scanCode);
@@ -310,7 +310,6 @@ bool GUICEGUIAdapter::injectKeyUp(const SDLKey& key)
 		S_LOG_WARNING("Error in CEGUI." << ex);
 	}
 	return true;
-
 }
 
 

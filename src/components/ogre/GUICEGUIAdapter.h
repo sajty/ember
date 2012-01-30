@@ -41,7 +41,7 @@ class OgreRenderer;
 namespace Ember {
 namespace OgreView {
 
-TYPEDEF_STL_MAP(SDLKey, CEGUI::Key::Scan, SDLKeyMap);
+TYPEDEF_STL_MAP(OIS::KeyCode, CEGUI::Key::Scan, OISKeyMap);
 
 /**
  * @author Erik Hjortsberg
@@ -65,17 +65,17 @@ public:
 	virtual bool injectMouseButtonUp(const Input::MouseButton& button);
 	virtual bool injectMouseButtonDown(const Input::MouseButton& button);
 	virtual bool injectChar(char character);
-	virtual bool injectKeyDown(const SDLKey& key);
-	virtual bool injectKeyUp(const SDLKey& key);
+	virtual bool injectKeyDown(const OIS::KeyCode& key);
+	virtual bool injectKeyUp(const OIS::KeyCode& key);
     
 private:
 	CEGUI::System *mGuiSystem;
 	CEGUI::OgreRenderer *mGuiRenderer;
 	
 	/**
-	mapping of SDL-keys to CEGUI keys
+	mapping of OIS-keys to CEGUI keys
 	*/
-	SDLKeyMap mKeyMap;
+	OISKeyMap mKeyMap;
 
 	bool MultiLineEditbox_selectionChangedHandler(const CEGUI::EventArgs& args);
 	bool Editbox_selectionChangedHandler(const CEGUI::EventArgs& args);

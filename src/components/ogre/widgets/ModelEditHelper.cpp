@@ -93,7 +93,7 @@ bool ModelEditHelper::injectMouseMove(const MouseMotion& motion, bool& freezeMou
 	if (mAttachPointHelper) {
 		Ogre::TagPoint* tagPoint = mAttachPointHelper->second.TagPoint;
 		//rotate the modelnode
-		if (Input::getSingleton().isKeyDown(SDLK_RCTRL) || Input::getSingleton().isKeyDown(SDLK_LCTRL)) {
+		if (Input::getSingleton().isModifierDown(OIS::Keyboard::Ctrl)) {
 			tagPoint->roll(Ogre::Degree(motion.xRelativeMovement * 180));
 		} else {
 			tagPoint->yaw(Ogre::Degree(motion.xRelativeMovement * 180));
@@ -133,12 +133,12 @@ bool ModelEditHelper::injectChar(char character)
 	return true;
 }
 
-bool ModelEditHelper::injectKeyDown(const SDLKey& key)
+bool ModelEditHelper::injectKeyDown(const OIS::KeyCode& key)
 {
 	return true;
 }
 
-bool ModelEditHelper::injectKeyUp(const SDLKey& key)
+bool ModelEditHelper::injectKeyUp(const OIS::KeyCode& key)
 {
 	return true;
 }

@@ -318,7 +318,6 @@ void Application::initializeServices()
 
 	S_LOG_INFO("Initializing input service");
 	EmberServices::getSingleton().getInputService().start();
-	EmberServices::getSingleton().getInputService().getInput().setMainLoopController(&mMainLoopController);
 
 	S_LOG_INFO("Initializing scripting service");
 	EmberServices::getSingleton().getScriptingService().start();

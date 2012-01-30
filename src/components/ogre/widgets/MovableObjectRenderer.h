@@ -122,8 +122,8 @@ public:
 	virtual bool injectMouseButtonUp(const Input::MouseButton& button);
 	virtual bool injectMouseButtonDown(const Input::MouseButton& button);
 	virtual bool injectChar(char character);
-	virtual bool injectKeyDown(const SDLKey& key);
-	virtual bool injectKeyUp(const SDLKey& key);
+	virtual bool injectKeyDown(const OIS::KeyCode& key);
+	virtual bool injectKeyUp(const OIS::KeyCode& key);
 
 	/**
 	 * Methods from Ogre::FrameListener

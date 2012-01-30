@@ -77,7 +77,7 @@ bool MovementAdapterWorkerDiscrete::injectMouseMove(const MouseMotion& motion, b
 	direction.y() = motion.yRelativeMovement;
 	direction = direction * mMovementSpeed;
 	//hard coded to allow the shift button to increase the speed
-	// 	if (Input::getSingleton().isKeyDown(SDLK_RSHIFT) || Input::getSingleton().isKeyDown(SDLK_LSHIFT)) {
+	// 	if (Input::getSingleton().isKeyDown(OIS::KC_RSHIFT) || Input::getSingleton().isKeyDown(OIS::KC_LSHIFT)) {
 	// 		direction = direction * 5;
 	// 	}
 
@@ -195,13 +195,13 @@ bool MovementAdapter::injectMouseButtonDown(const Input::MouseButton& button)
 
 	} else if (button == Input::MouseWheelUp) {
 		int movementDegrees = 10;
-		if (Input::getSingleton().isKeyDown(SDLK_LSHIFT) || Input::getSingleton().isKeyDown(SDLK_RSHIFT)) {
+		if (Input::getSingleton().isModifierDown(OIS::Keyboard::Shift)) {
 			movementDegrees = 1;
 		}
 		mBridge->yaw(movementDegrees);
 	} else if (button == Input::MouseWheelDown) {
 		int movementDegrees = 10;
-		if (Input::getSingleton().isKeyDown(SDLK_LSHIFT) || Input::getSingleton().isKeyDown(SDLK_RSHIFT)) {
+		if (Input::getSingleton().isModifierDown(OIS::Keyboard::Shift)) {
 			movementDegrees = 1;
 		}
 		mBridge->yaw(-movementDegrees);
@@ -215,11 +215,11 @@ bool MovementAdapter::injectChar(char character)
 	return true;
 }
 
-bool MovementAdapter::injectKeyDown(const SDLKey& key)
+bool MovementAdapter::injectKeyDown(const OIS::KeyCode& key)
 {
 	if (mWorker) {
 		//by pressing and holding shift we'll allow the user to position it with more precision. We do this by switching the worker instances.
-		if (key == SDLK_LSHIFT || key == SDLK_RSHIFT) {
+		if (key == OIS::KC_LSHIFT || key == OIS::KC_RSHIFT) {
 			delete mWorker;
 			mWorker = new MovementAdapterWorkerDiscrete(*this);
 		}
@@ -227,12 +227,12 @@ bool MovementAdapter::injectKeyDown(const SDLKey& key)
 	return true;
 }
 
-bool MovementAdapter::injectKeyUp(const SDLKey& key)
+bool MovementAdapter::injectKeyUp(const OIS::KeyCode& key)
 {
-	if (key == SDLK_ESCAPE) {
+	if (key == OIS::KC_ESCAPE) {
 		cancelMovement();
 		return false;
-	} else if (key == SDLK_LSHIFT || key == SDLK_RSHIFT) {
+	} else if (key == OIS::KC_LSHIFT || key == OIS::KC_RSHIFT) {
 		if (mWorker) {
 			delete mWorker;
 			mWorker = new MovementAdapterWorkerTerrainCursor(*this);

@@ -30,7 +30,7 @@
 #include "framework/ConsoleBackend.h"
 #include "services/config/ConfigService.h"
 #include "framework/LoggingInstance.h"
-
+#include <OISKeyboard.h>
 namespace Ember {
 
 
@@ -64,11 +64,11 @@ void InputCommandMapper::readFromConfigSection(const std::string& sectionName)
 
 }
 
-void InputCommandMapper::Input_EventKeyPressed(const SDL_keysym& key, Input::InputMode inputMode)
+void InputCommandMapper::Input_EventKeyPressed(const OIS::KeyEvent& key, Input::InputMode inputMode)
 {
 	if (mEnabled && isActiveForInputMode(inputMode)) {
 		//check if we have any key with a matching command
-		KeyMapStore::const_iterator keyI = mKeymap.find(key.sym);
+		KeyMapStore::const_iterator keyI = mKeymap.find(key.key);
 		if (keyI != mKeymap.end()) {
 			std::pair<KeyCommandStore::iterator, KeyCommandStore::iterator> commandsI = mKeyCommands.equal_range(keyI->second);
 			for (KeyCommandStore::iterator I = commandsI.first; I != commandsI.second; ++I) {
@@ -83,12 +83,12 @@ void InputCommandMapper::Input_EventKeyPressed(const SDL_keysym& key, Input::Inp
 }
 
 
-void InputCommandMapper::Input_EventKeyReleased(const SDL_keysym& key, Input::InputMode inputMode)
+void InputCommandMapper::Input_EventKeyReleased(const OIS::KeyEvent& key, Input::InputMode inputMode)
 {
 	if (mEnabled && isActiveForInputMode(inputMode)) {
 		//check if we have any key with a matching command
 		//only check for commands that start with a "+"
-		KeyMapStore::const_iterator keyI = mKeymap.find(key.sym);
+		KeyMapStore::const_iterator keyI = mKeymap.find(key.key);
 		if (keyI != mKeymap.end()) {
 			std::pair<KeyCommandStore::iterator, KeyCommandStore::iterator> commandsI = mKeyCommands.equal_range(keyI->second);
 			for (KeyCommandStore::iterator I = commandsI.first; I != commandsI.second; ++I) {
@@ -147,7 +147,7 @@ void InputCommandMapper::unbindCommand(const std::string& key, const std::string
 }
 
 
-//const std::string& InputCommandMapper::getCommandForKey(SDLKey key)
+//const std::string& InputCommandMapper::getCommandForKey(OIS::KeyCode key)
 //{
 //	KeyMapStore::const_iterator I = mKeymap.find(key);
 //	if (I != mKeymap.end()) {
@@ -162,7 +162,7 @@ void InputCommandMapper::unbindCommand(const std::string& key, const std::string
 //}
 
 
-// std::string Bindings::getBindingForKeysym(const SDL_keysym& key) {
+// std::string Bindings::getBindingForKeysym(const OIS::KeyEvent& key) {
 //
 //   std::map<int, std::string>::const_iterator I = m_keymap.find(key.sym);
 //   if (I == m_keymap.end()) return ""; // un-mapped basic keysym
@@ -190,141 +190,142 @@ void InputCommandMapper::unbindCommand(const std::string& key, const std::string
 // }
 
 void InputCommandMapper::initKeyMap() {
-  // Assign keys to textual representation
-  mKeymap[SDLK_BACKSPACE] = "backspace";
-  mKeymap[SDLK_TAB] = "tab";
-  mKeymap[SDLK_CLEAR] = "clear";
-  mKeymap[SDLK_RETURN] = "return";
-  mKeymap[SDLK_PAUSE] = "pause";
-  mKeymap[SDLK_ESCAPE] = "escape";
-  mKeymap[SDLK_SPACE] = "space";
-  mKeymap[SDLK_EXCLAIM] = "exclaim";
-  mKeymap[SDLK_QUOTEDBL] = "dbl_quote";
-  mKeymap[SDLK_HASH] = "hash";
-  mKeymap[SDLK_DOLLAR] = "dollar";
-  mKeymap[SDLK_AMPERSAND] = "ampersand";
-  mKeymap[SDLK_QUOTE] = "quote";
-  mKeymap[SDLK_LEFTPAREN] = "left_paren";
-  mKeymap[SDLK_RIGHTPAREN] = "right_paren";
-  mKeymap[SDLK_ASTERISK] = "asterisk";
-  mKeymap[SDLK_PLUS] = "plus";
-  mKeymap[SDLK_COMMA] = "comma";
-  mKeymap[SDLK_MINUS] = "-";
-  mKeymap[SDLK_PERIOD] = "period";
-  mKeymap[SDLK_SLASH] = "slash";
-  mKeymap[SDLK_0] = "0";
-  mKeymap[SDLK_1] = "1";
-  mKeymap[SDLK_2] = "2";
-  mKeymap[SDLK_3] = "3";
-  mKeymap[SDLK_4] = "4";
-  mKeymap[SDLK_5] = "5";
-  mKeymap[SDLK_6] = "6";
-  mKeymap[SDLK_7] = "7";
-  mKeymap[SDLK_8] = "8";
-  mKeymap[SDLK_9] = "9";
-  mKeymap[SDLK_COLON] = "colon";
-  mKeymap[SDLK_SEMICOLON] = "semi_colon";
-  mKeymap[SDLK_LESS] = "less_than";
-  mKeymap[SDLK_EQUALS] = "equals";
-  mKeymap[SDLK_GREATER] = "greater_then";
-  mKeymap[SDLK_QUESTION] = "question";
-  mKeymap[SDLK_AT] = "at";
-  mKeymap[SDLK_LEFTBRACKET] = "left_brace";
-  mKeymap[SDLK_BACKSLASH] = "backslash";
-  mKeymap[SDLK_RIGHTBRACKET] = "right_brace";
-  mKeymap[SDLK_CARET] = "caret";
-  mKeymap[SDLK_UNDERSCORE] = "_";
-  mKeymap[SDLK_BACKQUOTE] = "backquote";
-  mKeymap[SDLK_a] = "a";
-  mKeymap[SDLK_b] = "b";
-  mKeymap[SDLK_c] = "c";
-  mKeymap[SDLK_d] = "d";
-  mKeymap[SDLK_e] = "e";
-  mKeymap[SDLK_f] = "f";
-  mKeymap[SDLK_g] = "g";
-  mKeymap[SDLK_h] = "h";
-  mKeymap[SDLK_i] = "i";
-  mKeymap[SDLK_j] = "j";
-  mKeymap[SDLK_k] = "k";
-  mKeymap[SDLK_l] = "l";
-  mKeymap[SDLK_m] = "m";
-  mKeymap[SDLK_n] = "n";
-  mKeymap[SDLK_o] = "o";
-  mKeymap[SDLK_p] = "p";
-  mKeymap[SDLK_q] = "q";
-  mKeymap[SDLK_r] = "r";
-  mKeymap[SDLK_s] = "s";
-  mKeymap[SDLK_t] = "t";
-  mKeymap[SDLK_u] = "u";
-  mKeymap[SDLK_v] = "v";
-  mKeymap[SDLK_w] = "w";
-  mKeymap[SDLK_x] = "x";
-  mKeymap[SDLK_y] = "y";
-  mKeymap[SDLK_z] = "z";
-  mKeymap[SDLK_DELETE] = "delete";
-  mKeymap[SDLK_KP0] = "kp_0";
-  mKeymap[SDLK_KP1] = "kp_1";
-  mKeymap[SDLK_KP2] = "kp_2";
-  mKeymap[SDLK_KP3] = "kp_3";
-  mKeymap[SDLK_KP4] = "kp_4";
-  mKeymap[SDLK_KP5] = "kp_5";
-  mKeymap[SDLK_KP6] = "kp_6";
-  mKeymap[SDLK_KP7] = "kp_7";
-  mKeymap[SDLK_KP8] = "kp_8";
-  mKeymap[SDLK_KP9] = "kp_9";
-  mKeymap[SDLK_KP_PERIOD] = "kp_period";
-  mKeymap[SDLK_KP_DIVIDE] = "kp_divide";
-  mKeymap[SDLK_KP_MULTIPLY] = "kp_multi";
-  mKeymap[SDLK_KP_MINUS] = "kp_minus";
-  mKeymap[SDLK_KP_PLUS] = "kp_plus";
-  mKeymap[SDLK_KP_ENTER] = "kp_enter";
-  mKeymap[SDLK_KP_EQUALS] = "kp_equals";
-  mKeymap[SDLK_UP] = "up";
-  mKeymap[SDLK_DOWN] = "down";
-  mKeymap[SDLK_RIGHT] = "right";
-  mKeymap[SDLK_LEFT] = "left";
-  mKeymap[SDLK_INSERT] = "insert";
-  mKeymap[SDLK_HOME] = "home";
-  mKeymap[SDLK_END] = "end";
-  mKeymap[SDLK_PAGEUP] = "page_up";
-  mKeymap[SDLK_PAGEDOWN] = "page_down";
-  mKeymap[SDLK_F1] = "f1";
-  mKeymap[SDLK_F2] = "f2";
-  mKeymap[SDLK_F3] = "f3";
-  mKeymap[SDLK_F4] = "f4";
-  mKeymap[SDLK_F5] = "f5";
-  mKeymap[SDLK_F6] = "f6";
-  mKeymap[SDLK_F7] = "f7";
-  mKeymap[SDLK_F8] = "f8";
-  mKeymap[SDLK_F9] = "f9";
-  mKeymap[SDLK_F10] = "f10";
-  mKeymap[SDLK_F11] = "f11";
-  mKeymap[SDLK_F12] = "f12";
-  mKeymap[SDLK_F13] = "f13";
-  mKeymap[SDLK_F14] = "f14";
-  mKeymap[SDLK_F15] = "f15";
+	// Assign keys to textual representation
+	mKeymap[OIS::KC_BACK] = "backspace";
+	mKeymap[OIS::KC_TAB] = "tab";
+	mKeymap[OIS::KC_DELETE] = "clear";
+	mKeymap[OIS::KC_RETURN] = "return";
+	mKeymap[OIS::KC_PAUSE] = "pause";
+	mKeymap[OIS::KC_ESCAPE] = "escape";
+	mKeymap[OIS::KC_SPACE] = "space";
+	//mKeymap[OIS::KC_EXCLAIM] = "exclaim";
+	//mKeymap[OIS::KC_QUOTEDBL] = "dbl_quote";
+	//mKeymap[OIS::KC_HASH] = "hash";
+	//mKeymap[OIS::KC_DOLLAR] = "dollar";
+	//mKeymap[OIS::KC_AMPERSAND] = "ampersand";
+	//mKeymap[OIS::KC_QUOTE] = "quote";
+	mKeymap[OIS::KC_LBRACKET] = "left_paren";
+	//mKeymap[OIS::KC_RIGHTPAREN] = "right_paren";
+	//mKeymap[OIS::KC_ASTERISK] = "asterisk";
+	//mKeymap[OIS::KC_PLUS] = "plus";
+	mKeymap[OIS::KC_COMMA] = "comma";
+	//mKeymap[OIS::KC_MINUS] = "minus";
+	mKeymap[OIS::KC_PERIOD] = "period";
+	mKeymap[OIS::KC_SLASH] = "slash";
+	mKeymap[OIS::KC_0] = "0";
+	mKeymap[OIS::KC_1] = "1";
+	mKeymap[OIS::KC_2] = "2";
+	mKeymap[OIS::KC_3] = "3";
+	mKeymap[OIS::KC_4] = "4";
+	mKeymap[OIS::KC_5] = "5";
+	mKeymap[OIS::KC_6] = "6";
+	mKeymap[OIS::KC_7] = "7";
+	mKeymap[OIS::KC_8] = "8";
+	mKeymap[OIS::KC_9] = "9";
+	mKeymap[OIS::KC_COLON] = "colon";
+	mKeymap[OIS::KC_SEMICOLON] = "semi_colon";
+	//mKeymap[OIS::KC_LESS] = "less_than";
+	mKeymap[OIS::KC_EQUALS] = "equals";
+	//mKeymap[OIS::KC_GREATER] = "greater_then";
+	//mKeymap[OIS::KC_QUESTION] = "question";
+	mKeymap[OIS::KC_AT] = "at";
+	mKeymap[OIS::KC_LBRACKET] = "left_brace";
+	mKeymap[OIS::KC_BACKSLASH] = "backslash";
+	mKeymap[OIS::KC_RBRACKET] = "right_brace";
+	//mKeymap[OIS::KC_CARET] = "caret";
+	//mKeymap[OIS::KC_UNDERSCORE] = "_";
+	//mKeymap[OIS::KC_BACKQUOTE] = "backquote";
+	mKeymap[OIS::KC_A] = "a";
+	mKeymap[OIS::KC_B] = "b";
+	mKeymap[OIS::KC_C] = "c";
+	mKeymap[OIS::KC_D] = "d";
+	mKeymap[OIS::KC_E] = "e";
+	mKeymap[OIS::KC_F] = "f";
+	mKeymap[OIS::KC_G] = "g";
+	mKeymap[OIS::KC_H] = "h";
+	mKeymap[OIS::KC_I] = "i";
+	mKeymap[OIS::KC_J] = "j";
+	mKeymap[OIS::KC_K] = "k";
+	mKeymap[OIS::KC_L] = "l";
+	mKeymap[OIS::KC_M] = "m";
+	mKeymap[OIS::KC_N] = "n";
+	mKeymap[OIS::KC_O] = "o";
+	mKeymap[OIS::KC_P] = "p";
+	mKeymap[OIS::KC_Q] = "q";
+	mKeymap[OIS::KC_R] = "r";
+	mKeymap[OIS::KC_S] = "s";
+	mKeymap[OIS::KC_T] = "t";
+	mKeymap[OIS::KC_U] = "u";
+	mKeymap[OIS::KC_V] = "v";
+	mKeymap[OIS::KC_W] = "w";
+	mKeymap[OIS::KC_X] = "x";
+	mKeymap[OIS::KC_Y] = "y";
+	mKeymap[OIS::KC_Z] = "z";
+	mKeymap[OIS::KC_DELETE] = "delete";
+	mKeymap[OIS::KC_NUMPAD0] = "kp_0";
+	mKeymap[OIS::KC_NUMPAD1] = "kp_1";
+	mKeymap[OIS::KC_NUMPAD2] = "kp_2";
+	mKeymap[OIS::KC_NUMPAD3] = "kp_3";
+	mKeymap[OIS::KC_NUMPAD4] = "kp_4";
+	mKeymap[OIS::KC_NUMPAD5] = "kp_5";
+	mKeymap[OIS::KC_NUMPAD6] = "kp_6";
+	mKeymap[OIS::KC_NUMPAD7] = "kp_7";
+	mKeymap[OIS::KC_NUMPAD8] = "kp_8";
+	mKeymap[OIS::KC_NUMPAD9] = "kp_9";
+	mKeymap[OIS::KC_NUMPADCOMMA] = "kp_period";
+	mKeymap[OIS::KC_DIVIDE] = "kp_divide";
+	mKeymap[OIS::KC_MULTIPLY] = "kp_multi";
+	mKeymap[OIS::KC_MINUS] = "kp_minus";
+	mKeymap[OIS::KC_ADD] = "kp_plus";
+	mKeymap[OIS::KC_NUMPADENTER] = "kp_enter";
+	mKeymap[OIS::KC_NUMPADEQUALS] = "kp_equals";
+	mKeymap[OIS::KC_UP] = "up";
+	mKeymap[OIS::KC_DOWN] = "down";
+	mKeymap[OIS::KC_RIGHT] = "right";
+	mKeymap[OIS::KC_LEFT] = "left";
+	mKeymap[OIS::KC_INSERT] = "insert";
+	mKeymap[OIS::KC_HOME] = "home";
+	mKeymap[OIS::KC_END] = "end";
+	mKeymap[OIS::KC_PGUP] = "page_up";
+	mKeymap[OIS::KC_PGDOWN] = "page_down";
+	mKeymap[OIS::KC_F1] = "f1";
+	mKeymap[OIS::KC_F2] = "f2";
+	mKeymap[OIS::KC_F3] = "f3";
+	mKeymap[OIS::KC_F4] = "f4";
+	mKeymap[OIS::KC_F5] = "f5";
+	mKeymap[OIS::KC_F6] = "f6";
+	mKeymap[OIS::KC_F7] = "f7";
+	mKeymap[OIS::KC_F8] = "f8";
+	mKeymap[OIS::KC_F9] = "f9";
+	mKeymap[OIS::KC_F10] = "f10";
+	mKeymap[OIS::KC_F11] = "f11";
+	mKeymap[OIS::KC_F12] = "f12";
+	mKeymap[OIS::KC_F13] = "f13";
+	mKeymap[OIS::KC_F14] = "f14";
+	mKeymap[OIS::KC_F15] = "f15";
 
-  mKeymap[SDLK_NUMLOCK] = "num";
-  mKeymap[SDLK_CAPSLOCK] = "caps";
-  mKeymap[SDLK_SCROLLOCK] = "srcoll";
-  mKeymap[SDLK_RSHIFT] = "right_shift";
-  mKeymap[SDLK_LSHIFT] = "left_shift";
-  mKeymap[SDLK_RCTRL] = "right_ctrl";
-  mKeymap[SDLK_LCTRL] = "left_ctrl";
-  mKeymap[SDLK_RALT] = "right_alt";
-  mKeymap[SDLK_LALT] = "left_alt";
-  mKeymap[SDLK_RMETA] = "right_meta";
-  mKeymap[SDLK_LMETA] = "left_meta";
-  mKeymap[SDLK_LSUPER] = "left_super";
-  mKeymap[SDLK_RSUPER] = "right_super";
-  mKeymap[SDLK_MODE]= "mode";
-  mKeymap[SDLK_COMPOSE] = "compose";
-  mKeymap[SDLK_PRINT] = "print";
-  mKeymap[SDLK_SYSREQ] = "sysreq";
-  mKeymap[SDLK_BREAK] = "break";
-  mKeymap[SDLK_MENU] = "menu";
-  mKeymap[SDLK_POWER] = "power";
-  mKeymap[SDLK_EURO] = "euro";
+	mKeymap[OIS::KC_NUMLOCK] = "num";
+	mKeymap[OIS::KC_CAPITAL] = "caps";
+	mKeymap[OIS::KC_SCROLL] = "srcoll";
+	mKeymap[OIS::KC_RSHIFT] = "right_shift";
+	mKeymap[OIS::KC_LSHIFT] = "left_shift";
+	mKeymap[OIS::KC_RCONTROL] = "right_ctrl";
+	mKeymap[OIS::KC_LCONTROL] = "left_ctrl";
+	mKeymap[OIS::KC_RMENU] = "right_alt";
+	mKeymap[OIS::KC_LMENU] = "left_alt";
+	mKeymap[OIS::KC_RMENU] = "right_meta";
+	mKeymap[OIS::KC_LMENU] = "left_meta";
+	//mKeymap[OIS::KC_LSUPER] = "left_super";
+	//mKeymap[OIS::KC_RSUPER] = "right_super";
+	//mKeymap[OIS::KC_MODE]= "mode";
+	//mKeymap[OIS::KC_COMPOSE] = "compose";
+	//mKeymap[OIS::KC_PRINT] = "print";
+	mKeymap[OIS::KC_SYSRQ] = "sysreq";
+	//mKeymap[OIS::KC_BREAK] = "break";
+	//mKeymap[OIS::KC_MENU] = "menu";
+	mKeymap[OIS::KC_POWER] = "power";
+	//mKeymap[OIS::KC_EURO] = "euro";
+	mKeymap[OIS::KC_UNASSIGNED] = "unassigned";
 }
 
 }

@@ -24,11 +24,10 @@
 #ifndef EMBEROGREINPUTCOMMANDMAPPER_H
 #define EMBEROGREINPUTCOMMANDMAPPER_H
 
-#include <SDL.h>
 #include "Input.h"
 #include <vector>
 #include <map>
-
+#include <OISKeyboard.h>
 namespace Ember {
 
 
@@ -44,7 +43,7 @@ class InputCommandMapper : public virtual sigc::trackable
 {
 public:
 	typedef std::multimap<std::string, std::string> KeyCommandStore;
-	typedef std::map<SDLKey, std::string> KeyMapStore;
+	typedef std::map<OIS::KeyCode, std::string> KeyMapStore;
 	typedef std::vector<Input::InputMode> InputModeStore;
 	typedef std::vector<std::string> StringStore;
 
@@ -135,13 +134,13 @@ protected:
 	 * @param key
 	 * @param inputMode
 	 */
-	void Input_EventKeyPressed(const SDL_keysym& key, Input::InputMode inputMode);
+	void Input_EventKeyPressed(const OIS::KeyEvent& key, Input::InputMode inputMode);
 	/**
 	 * @brief At keyrelease time, see if there's a command prefixed with "+", such as "+run", which should have its "-" twin command sent out.
 	 * @param key
 	 * @param inputMode
 	 */
-	void Input_EventKeyReleased(const SDL_keysym& key, Input::InputMode inputMode);
+	void Input_EventKeyReleased(const OIS::KeyEvent& key, Input::InputMode inputMode);
 
 	/**
 	 * @brief A store of the mapping between keys and commands.
@@ -158,15 +157,15 @@ protected:
 	 * @param key
 	 * @return
 	 */
-//	const std::string& getCommandForKey(SDLKey key);
+//	const std::string& getCommandForKey(OIS::KeyCode key);
 
 	/**
-	Mappings between SDLKeys and their names.
+	Mappings between OIS::KeyCodes and their names.
 	*/
 	KeyMapStore mKeymap;
 
 	/**
-	 *    Creates the mapping between SDLKeys and their names.
+	 *    Creates the mapping between OIS::KeyCodes and their names.
 	 */
 	void initKeyMap();
 

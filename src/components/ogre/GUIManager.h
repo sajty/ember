@@ -28,7 +28,6 @@
 #include <OgreFrameListener.h>
 #include <CEGUIBase.h>
 #include <sigc++/trackable.h>
-#include <SDL.h>
 #include <stack>
 
 namespace CEGUI
@@ -337,7 +336,7 @@ protected:
 
 	void EmberOgre_WorldDestroyed();
 
-	void pressedKey(const SDL_keysym& key, Input::InputMode inputMode);
+	void pressedKey(const OIS::KeyEvent& key, Input::InputMode inputMode);
 
 	/**
 	 * @brief Called when a new View instance is created.

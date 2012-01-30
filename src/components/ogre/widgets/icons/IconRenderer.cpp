@@ -133,9 +133,6 @@ void IconRenderer::performRendering(Model::Model* model, Icon* icon)
 			}
 		}
 
-		// 		SDL_Delay(1000);
-		// 		blitRenderToIcon(icon);
-
 		node->detachAllObjects();
 
 	}

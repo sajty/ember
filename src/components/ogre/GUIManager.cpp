@@ -446,11 +446,10 @@ const bool GUIManager::isInGUIMode() const
 	return getInput().getInputMode() == Input::IM_GUI;
 }
 
-void GUIManager::pressedKey(const SDL_keysym& key, Input::InputMode inputMode)
+void GUIManager::pressedKey(const OIS::KeyEvent& key, Input::InputMode inputMode)
 {
-	if (((key.mod & KMOD_CTRL) || (key.mod & KMOD_LCTRL) || (key.mod & KMOD_RCTRL)) && ((key.sym == SDLK_c) || (key.sym == SDLK_x))) {
-
-		bool cut = (key.sym == SDLK_x);
+	if ((key.key == OIS::KC_C || key.key == OIS::KC_X) && Input::getSingleton().isModifierDown(OIS::Keyboard::Ctrl)) {
+		bool cut = (key.key == OIS::KC_X);
 		CEGUI::Window* active = mSheet->getActiveChild();
 		if (!active)
 			return;

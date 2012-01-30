@@ -32,19 +32,18 @@
 
 #include <sigc++/slot.h>
 #include <sigc++/signal.h>
-#include <SDL_keysym.h>
 
 #include <set>
 #include <list>
 #include <map>
-#ifdef HAVE_STDINT_H
-	#include <stdint.h>
-#else
-	typedef unsigned int uint32_t;
-#endif
 
-struct SDL_KeyboardEvent;
-struct SDL_keysym;
+#include <OISKeyboard.h>
+#include <OISMouse.h>
+
+namespace OIS {
+	class KeyListener;
+	class MouseListener;
+}
 
 namespace varconf {
 class Variable;
@@ -54,112 +53,113 @@ namespace Ember
 {
 
 class IInputAdapter;
+class IWindowProvider;
 class InputCommandMapper;
 class ConfigListenerContainer;
-class MainLoopController;
 
-typedef std::set<SDLKey> KeysSet;
+typedef std::set<OIS::KeyCode> KeysSet;
 typedef std::list<IInputAdapter*> IInputAdapterStore;
 
 /**
- @brief Struct for a mouse movement.
- @author Erik Hjortsberg <erik.hjortsberg@gmail.com>
+ * @brief Struct for a mouse movement.
+ * @author Erik Hjortsberg <erik.hjortsberg@gmail.com>
  */
 struct MouseMotion
 {
 	/**
-	 @brief The horizontal position of the mouse in pixels.
+	 * @brief The horizontal position of the mouse in pixels.
 	 */
 	int xPosition;
+
 	/**
-	 @brief The vertical position of the mouse in pixels.
+	 * @brief The vertical position of the mouse in pixels.
 	 */
 	int yPosition;
 
 	/**
-	 @brief The relative horizontal position of the mouse.
-	 This is between 0..1
+	 * @brief The relative horizontal position of the mouse.
+	 * This is between 0..1
 	 */
 	float xRelativeMovement;
+
 	/**
-	 @brief The relative vertical position of the mouse.
-	 This is between 0..1
+	 * @brief The relative vertical position of the mouse.
+	 * This is between 0..1
 	 */
 	float yRelativeMovement;
 
 	/**
-	 @brief The relative horizontal movement in pixels.
-	 The amount of pixels the cursor has moved since our last sampling point.
+	 * @brief The relative horizontal movement in pixels.
+	 * The amount of pixels the cursor has moved since our last sampling point.
 	 */
 	int xRelativeMovementInPixels;
+
 	/**
-	 @brief The relative vertical movement in pixels.
-	 The amount of pixels the cursor has moved since our last sampling point.
+	 * @brief The relative vertical movement in pixels.
+	 * The amount of pixels the cursor has moved since our last sampling point.
 	 */
 	int yRelativeMovementInPixels;
 
-	/**
-	 @brief The time since last sampling point.
-	 Expressed as full seconds.
-	 */
-	float timeSinceLastMovement;
 };
 
 /**
- @brief Expresses the position of the mouse, both in terms of pixels and relative.
-
- Positions are from the upper left corner.
- @author Erik Hjortsberg <erik.hjortsberg@gmail.com>
+ * @brief Expresses the position of the mouse, both in terms of pixels and relative.
+ * 
+ * Positions are from the upper left corner.
+ * @author Erik Hjortsberg <erik.hjortsberg@gmail.com>
  */
 struct MousePosition
 {
 	/**
-	 @brief The horizontal position of the mouse in pixels.
+	 * @brief The horizontal position of the mouse in pixels.
 	 */
 	int xPixelPosition;
 	/**
-	 @brief The vertical position of the mouse in pixels.
+	 * @brief The vertical position of the mouse in pixels.
 	 */
 	int yPixelPosition;
 
 	/**
-	 @brief The relative horizontal position of the mouse.
-	 0 is to the left, 1 is to the right.
+	 * @brief The relative horizontal position of the mouse.
+	 * 0 is to the left, 1 is to the right.
 	 */
 	float xRelativePosition;
 	/**
-	 @brief The relative vertical position of the mouse.
-	 0 is at the top, 1 is at the bottom.
+	 * @brief The relative vertical position of the mouse.
+	 * 0 is at the top, 1 is at the bottom.
 	 */
 	float yRelativePosition;
 
 };
 
 /**
- @author Erik Hjortsberg <erik.hjortsberg@gmail.com>
-
- @brief This class takes care of all input and routes it to the correct place in Ember.
- Right now that means that when in GUI mode, all input will be routed to the registered list of @see IInputAdapter, and when in non-gui mode (ie. movement mode), all input will be routed directly to Ember, where it can be handled by the camera and movement system.
-
- Note that while keyboard input is buffered, mouse input is not.
-
- You can listen to input updates either by listening directly to the events, or by registering an instance of IInputAdapter through the addAdapter and removeAdapter methods.
-
- This class also provides some methods useful for standard windowing and event system integration, such as isApplicationVisible().
+ * @author Erik Hjortsberg <erik.hjortsberg@gmail.com>
+ * 
+ * @brief This class takes care of all input and routes it to the correct place in Ember.
+ * Right now that means that when in GUI mode, all input will be routed to the registered list of @see IInputAdapter, and when in non-gui mode (ie. movement mode), all input will be routed directly to Ember, where it can be handled by the camera and movement system.
+ * 
+ * Note that while keyboard input is buffered, mouse input is not.
+ * 
+ * You can listen to input updates either by listening directly to the events, or by registering an instance of IInputAdapter through the addAdapter and removeAdapter methods.
+ * 
+ * This class also provides some methods useful for standard windowing and event system integration, such as isApplicationVisible().
  */
-class Input: public ConsoleObject, public Singleton<Input>
+class Input:
+	public ConsoleObject,
+	public Singleton<Input>,
+	public OIS::KeyListener,
+	public OIS::MouseListener
 {
-	friend class InputCommandMapper;
 
 public:
 
 	/**
-	 @brief Command for binding keys to commands.
+	 * @brief Command for binding keys to commands.
 	 */
 	static const std::string BINDCOMMAND;
 
 	/**
-	 @brief Command for unbinding keys to commands.
+	 * @brief Command for unbinding keys to commands.
 	 */
 	static const std::string UNBINDCOMMAND;
 
@@ -169,17 +169,17 @@ public:
 	};
 
 	/**
-	 @brief Describes different input modes.
+	 * @brief Describes different input modes.
 	 */
 	enum InputMode
 	{
 		/**
-		 @brief In gui mode, the mouse will move the cursor and allow interaction with the GUI system
+		 * @brief In gui mode, the mouse will move the cursor and allow interaction with the GUI system
 		 */
 		IM_GUI,
 
 		/**
-		 @brief In movement mode, the mouse will move the camera and the keys will move the player. Interaction with the gui is not possible.
+		 * @brief In movement mode, the mouse will move the camera and the keys will move the player. Interaction with the gui is not possible.
 		 */
 		IM_MOVEMENT
 	};
@@ -190,11 +190,19 @@ public:
 
 	/**
 	 * @brief Initializes the input object. Call this before you want to receive input.
-	 * @param width The width of the window, in pixels.
-	 * @param heigh The height of the window, in pixels.
+	 * @param window The target window to attach OIS.
+	 * @param params Optional, you can pass OIS parameters to it. You don't need to pass the window handle.
 	 */
-	void initialize(int width, int height);
+	void attach(IWindowProvider* windowProvider, OIS::ParamList& params = OIS::ParamList());
 
+	/**
+	 * @brief This will detach the input system from the window.
+	 *
+	 * You should detach OIS before the window is destroyed.
+	 * You can't use OIS after this call, even if the window still exists.
+	 * It's safe to call it multiple times. Second call will be ignored.
+	 */
+	void detach();
 
 	/**
 	 * @brief Call this when application setup has completed and the user should start interacting with the application.
@@ -211,41 +219,34 @@ public:
 	void processInput();
 
 	/**
-	 *    @brief Checks whether the application is visible and nor minimized.
+	 * @brief Checks whether the application is visible and nor minimized.
 	 * @return True if the application is in normal shown mode, false if it's minimized.
 	 */
 	bool isApplicationVisible();
 
-	/**
-	 * @brief Sets the main loop controller.
-	 *
-	 * @param mainLoopController The main loop controller.
-	 */
-	void setMainLoopController(MainLoopController* mainLoopController);
-
 	/** @brief Emitted when a key has been pressed in movement mode.
-	 @param the key event
-	 @param true if the application is in gui mode
+	 * @param the key event
+	 * @param true if the application is in gui mode
 	 */
-	sigc::signal<void, const SDL_keysym&, Input::InputMode> EventKeyPressed;
+	sigc::signal<void, const OIS::KeyEvent&, Input::InputMode> EventKeyPressed;
 
 	/** @brief Emitted when a key has been released in movement mode.
-	 @param the key event
-	 @param true if the application is in gui mode
+	 * @param the key event
+	 * @param true if the application is in gui mode
 	 */
-	sigc::signal<void, const SDL_keysym&, Input::InputMode> EventKeyReleased;
+	sigc::signal<void, const OIS::KeyEvent&, Input::InputMode> EventKeyReleased;
 
 	/** @brief Emitted when the mouse has moved.
-	 Note that when in non-gui mode, the x and y position for the mouse will always be the same for consecutive signals although the relative position will have changed.
-	 @param the mouse motion
-	 @param true if ember is in gui mode
+	 * Note that when in non-gui mode, the x and y position for the mouse will always be the same for consecutive signals although the relative position will have changed.
+	 * @param the mouse motion
+	 * @param true if ember is in gui mode
 	 */
 	sigc::signal<void, const MouseMotion&, InputMode> EventMouseMoved;
 
 	/**
-	 @brief Emitted when a mouse button is pressed.
-	 @param the mouse button
-	 @param true if ember is in gui mode
+	 * @brief Emitted when a mouse button is pressed.
+	 * @param the mouse button
+	 * @param true if ember is in gui mode
 	 */
 	sigc::signal<void, MouseButton, InputMode> EventMouseButtonPressed;
 
@@ -253,34 +254,40 @@ public:
 	 * @brief Emitted when a mouse button is released.
 	 * @param the mouse button
 	 * @param true if ember is in gui mode
-	 *
 	 */
 	sigc::signal<void, MouseButton, InputMode> EventMouseButtonReleased;
 
 	/**
-	 @brief Emitted when the input mode has been changed.
-	 @param the new input mode
+	 * @brief Emitted when the input mode has been changed.
+	 * @param the new input mode
 	 */
 	sigc::signal<void, InputMode> EventChangedInputMode;
 
-	/** 
-	 @brief Emitted when the window is minimized or un-mininized.
-	 @param True if the window is active, false it it's minimized.
-	 */
-	sigc::signal<void, bool> EventWindowActive;
-
 	/**
-	 * @brief Emitted when the user has pressed Alt-Tab and thus want to switch window.
+	 * @brief Emitted when the user has changed the window focus, which usually means Alt-Tab switching.
 	 * If the application is in mouse grab mode we should probably release it.
 	 */
-	sigc::signal<void> EventAltTab;
+	sigc::signal<void> EventWindowFocusChange;
 
 	/**
-	 * @brief Returns true if the supplied key is down 
+	 * @brief Returns true if the supplied key is down.
 	 * @param  key The key to check for.
-	 * @return True if the key is down
+	 * @return True if the key is down.
 	 */
-	const bool isKeyDown(const SDLKey& key) const;
+	const bool isKeyDown(const OIS::KeyCode& key) const;
+
+	/**
+	 * @brief Returns true if the supplied modifiers are down.
+	 * 
+	 * It will provide cleaner and faster solution compared to isKeyDown:
+	 * (input.isKeyDown(OIS::KC_LCONTROL) || input.isKeyDown(OIS::KC_RCONTROL)) && (input.isKeyDown(OIS::KC_LSHIFT) || input.isKeyDown(OIS::KC_RSHIFT))
+	 * is the same as
+	 * input.isModifierDown(OIS::Keyboard::Ctrl | OIS::Keyboard::Shift)
+	 * 
+	 * @param modifier The mask of modifiers to check for.
+	 * @return True if the modifiers are down.
+	 */
+	const bool isModifierDown(const OIS::Keyboard::Modifier &modifier) const;
 
 	/**
 	 * @brief Sets the window geometry. Call this whenever the size of the window has changed.
@@ -329,19 +336,19 @@ public:
 	virtual void runCommand(const std::string &command, const std::string &args);
 
 	/**
-	 @brief Suppress all further event handling of the current event. Call this inside event handling methods to prevent further event handling.
+	 * @brief Suppress all further event handling of the current event. Call this inside event handling methods to prevent further event handling.
 	 */
 	void suppressFurtherHandlingOfCurrentEvent();
 
 	/**
-	 @brief Gets whether the movement mode is enabled, at which all mouse right click events will toggle between movement mode and mouse mode.
-	 @return True if movement mode is enabled.
+	 * @brief Gets whether the movement mode is enabled, at which all mouse right click events will toggle between movement mode and mouse mode.
+	 * @return True if movement mode is enabled.
 	 */
 	bool getMovementModeEnabled() const;
 
 	/**
-	 @brief Sets whether the movement mode is enabled, at which all mouse right click events will toggle between movement mode and mouse mode.
-	 @param value Whether to enable movement mode or not.
+	 * @brief Sets whether the movement mode is enabled, at which all mouse right click events will toggle between movement mode and mouse mode.
+	 * @param value Whether to enable movement mode or not.
 	 */
 	void setMovementModeEnabled(bool value);
 
@@ -354,7 +361,7 @@ public:
 
 	/**
 	 * @brief Gets the current mouse position.
-	 * @return The last mouse position.
+	 * @return The current mouse position.
 	 */
 	const MousePosition& getMousePosition() const;
 
@@ -364,9 +371,63 @@ public:
 	 */
 	void sleep(unsigned int milliseconds);
 
-protected:
+	/**
+	 * @brief This is called automatically from OIS, when a key was pressed.
+	 * 
+	 * This is called only from main thread and therefore thread-safe.
+	 * OIS gets the main thread through Input::processInput, which should be called every frame.
+	 * Never return false, because that would clear all further messages and you would loose input events!
+	 * 
+	 * param e The key event to process.
+	 */
+	bool keyPressed(const OIS::KeyEvent& e);
 
-	typedef std::map<std::string, InputCommandMapper*> InputCommandMapperStore;
+	/**
+	 * @brief This is called automatically from OIS, when a key was released.
+	 * 
+	 * This is called only from main thread and therefore thread-safe.
+	 * OIS gets the main thread through Input::processInput, which should be called every frame.
+	 * Never return false, because that would clear all further messages and you would loose input events!
+	 * 
+	 * param e The key event to process.
+	 */
+	bool keyReleased(const OIS::KeyEvent& e);
+
+	/**
+	 * @brief This is called automatically from OIS, when mouse position or mouse wheel has changed.
+	 * 
+	 * In OIS the mouse wheel is the Z coordinate of the mouse and scrolling will triger this function too.
+	 * This is called only from main thread and therefore thread-safe.
+	 * OIS gets the main thread through Input::processInput, which should be called every frame.
+	 * Never return false, because that would clear all further messages and you would loose input events!
+	 * 
+	 * param e The mouse event to process.
+	 */
+	bool mouseMoved(const OIS::MouseEvent& e);
+
+	/**
+	 * @brief This is called automatically from OIS, when mouse button was pressed.
+	 * 
+	 * This is called only from main thread and therefore thread-safe.
+	 * OIS gets the main thread through Input::processInput, which should be called every frame.
+	 * Never return false, because that would clear all further messages and you would loose input events!
+	 * 
+	 * param e The mouse event to process.
+	 * param id The button index, which represents the pressed button.
+	 */
+	bool mousePressed(const OIS::MouseEvent& e, OIS::MouseButtonID id);
+
+	/**
+	 * @brief This is called automatically from OIS, when mouse button was released.
+	 * 
+	 * This is called only from main thread and therefore thread-safe.
+	 * OIS gets the main thread through Input::processInput, which should be called every frame.
+	 * Never return false, because that would clear all further messages and you would loose input events!
+	 * 
+	 * param e The mouse event to process.
+	 * param id The button index, which represents the released button.
+	 */
+	bool mouseReleased(const OIS::MouseEvent& e, OIS::MouseButtonID id);
 
 	/**
 	 * @brief Registers a command mapper.
@@ -381,28 +442,19 @@ protected:
 	void deregisterCommandMapper(InputCommandMapper* mapper);
 
 	/**
-	 @brief The current input mode.
+	 * @brief Enabled or disables mouse grabbing.
+	 * @param enabled True if the mouse should be grabbed.
+	 */
+	void setMouseGrab(bool enabled);
+
+private:
+
+	typedef std::map<std::string, InputCommandMapper*> InputCommandMapperStore;
+
+	/**
+	 * @brief The current input mode.
 	 */
 	InputMode mCurrentInputMode;
-
-	/**
-	 * @brief Polls all input for the mouse.
-	 * Call this each frame.
-	 * @param secondsSinceLast In whole seconds, the time since the last polling.
-	 */
-	void pollMouse(float secondsSinceLast);
-
-	/**
-	 * @brief Polls all needed events from the system.
-	 * Call this each frame.
-	 * @param secondsSinceLast In whole seconds, the time since the last polling.
-	 */
-	void pollEvents(float secondsSinceLast);
-
-	void keyChanged(const SDL_KeyboardEvent &keyEvent);
-
-	void keyPressed(const SDL_KeyboardEvent &keyEvent);
-	void keyReleased(const SDL_KeyboardEvent &keyEvent);
 
 	/**
 	 * @brief Bind the ability for Ember to catch the mouse to the input:catchmouse key.
@@ -413,41 +465,9 @@ protected:
 	void Config_CatchMouse(const std::string& section, const std::string& key, varconf::Variable& variable);
 
 	/**
-	 * @brief Enabled or disables mouse grabbing.
-	 * @param enabled True if the mouse should be grabbed.
-	 */
-	void setMouseGrab(bool enabled);
-
-	/**
-	 @brief Keys which should not be injected as chars, ie. enter, backspace etc.
-	 */
-	KeysSet mNonCharKeys;
-
-	/**
-	 @brief A set of the keys that are currently pressed.
-	 */
-	KeysSet mKeysPressed;
-
-	/**
-	 @brief Saves the last mouse state.
-	 */
-	unsigned int mMouseState;
-
-	/**
-	 @brief The last positions of the mouse.
+	 * @brief The last positions of the mouse.
 	 */
 	MousePosition mMousePosition;
-
-	/**
-	 @brief The amount of time since the last right mouse click.
-	 Used for detecting double clicks.
-	 */
-	float mTimeSinceLastRightMouseClick;
-
-	/**
-	 @brief Store the last tick count, to use for looking up how much time has elapsed since our last event polling.
-	 */
-	uint32_t mLastTick;
 
 	/**
 	 * @brief Gets the text in the clipboard and pastes it to the gui system.
@@ -460,12 +480,7 @@ protected:
 	IInputAdapterStore mAdapters;
 
 	/**
-	 @brief The dimensions of the window.
-	 */
-	float mScreenWidth, mScreenHeight;
-
-	/**
-	 @brief A store of InputCommandMappers with their state as the key.
+	 * @brief A store of InputCommandMappers with their state as the key.
 	 */
 	InputCommandMapperStore mInputCommandMappers;
 
@@ -494,11 +509,29 @@ protected:
 	bool mMouseGrabbingRequested;
 
 	/**
-	 * @brief The main loop controller.
-	 *
-	 * This mainly allows us to request that the application is shut down.
+	 * @brief Whether the mouse is grabbed.
 	 */
-	MainLoopController* mMainLoopController;
+	bool mMouseGrab;
+
+	/**
+	 * @brief The Window Provider, which provides the communication interface between the window and the input system.
+	 */
+	IWindowProvider* mWindowProvider;
+
+	/**
+	 * @brief The Mouse object. It can be used to get current mouse state.
+	 */
+	OIS::Mouse* mMouse;
+
+	/**
+	 * @brief The Keyboard object. It can be used to get current key state.
+	 */
+	OIS::Keyboard* mKeyboard;
+
+	/**
+	 * @brief The main object of OIS.
+	 */
+	OIS::InputManager* mInputManager;
 };
 
 }
