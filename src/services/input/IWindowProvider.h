@@ -47,6 +47,11 @@ public:
 	 * @brief Returns the window handle as string.
 	 */
 	virtual void getWindowSize(unsigned int& width, unsigned int& height) = 0;
+
+	/**
+	 * @brief Returns whether the window has focus.
+	 */
+	 virtual bool hasWindowFocus() = 0;
 };
 
 }

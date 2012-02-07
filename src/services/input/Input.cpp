@@ -51,7 +51,7 @@ const std::string Input::UNBINDCOMMAND("unbind");
 Input::Input() :
 	mCurrentInputMode(IM_GUI),
 	mSuppressForCurrentEvent(false), mMovementModeEnabled(false),
-	mMouseGrab(false), mWindowProvider(NULL),
+	mMouseGrab(false), mCatchMouse(false), mWindowProvider(NULL),
 	mInputManager(NULL), mKeyboard(NULL), mMouse(NULL),
 	mConfigListenerContainer(new ConfigListenerContainer())
 {
@@ -81,14 +81,14 @@ void Input::attach(IWindowProvider* windowProvider, OIS::ParamList& params)
 
 	// If possible create a buffered keyboard
 	if (mInputManager->getNumberOfDevices(OIS::OISKeyboard) > 0) {
-			mKeyboard = static_cast<OIS::Keyboard*>(mInputManager->createInputObject (OIS::OISKeyboard, true));
-			mKeyboard->setEventCallback (this);
-		}
+		mKeyboard = static_cast<OIS::Keyboard*>(mInputManager->createInputObject (OIS::OISKeyboard, true));
+		mKeyboard->setEventCallback(this);
+	}
 
 	// If possible create a buffered mouse
 	if (mInputManager->getNumberOfDevices(OIS::OISMouse) > 0) {
 		mMouse = static_cast<OIS::Mouse*>(mInputManager->createInputObject (OIS::OISMouse, true));
-		mMouse->setEventCallback (this);
+		mMouse->setEventCallback(this);
 
 		//update the window size for the mouse
 		unsigned int width, height;
@@ -198,7 +198,9 @@ void Input::processInput()
 
 bool Input::mouseMoved(const OIS::MouseEvent& e)
 {
-
+	if(mShouldCatchMouse && !mCatchMouse){
+		return true;
+	}
 	//handle mouse scrolling
 	int scroll = e.state.Z.rel;
 	if(scroll != 0){
@@ -268,7 +270,10 @@ bool Input::mouseMoved(const OIS::MouseEvent& e)
 }
 bool Input::mousePressed(const OIS::MouseEvent& e, OIS::MouseButtonID id)
 {
-
+	if(mShouldCatchMouse && !mCatchMouse){
+		setMouseCatch(true);
+		return true;
+	}
 	switch (id){
 	case OIS::MB_Right:
 		//if the right mouse button is pressed, switch from gui mode
@@ -307,6 +312,9 @@ bool Input::mousePressed(const OIS::MouseEvent& e, OIS::MouseButtonID id)
 
 bool Input::mouseReleased(const OIS::MouseEvent& e, OIS::MouseButtonID id)
 {
+	if(mShouldCatchMouse && !mCatchMouse){
+		return true;
+	}
 	switch (id){
 	case OIS::MB_Right:
 		EventMouseButtonReleased.emit(MouseButtonRight, mCurrentInputMode);
@@ -367,7 +375,9 @@ const bool Input::isModifierDown(const OIS::Keyboard::Modifier &modifier) const
 }
 bool Input::keyPressed(const OIS::KeyEvent& keyEvent)
 {
-
+	if(mShouldCatchMouse && !mCatchMouse){
+		return true;
+	}
 	if (keyEvent.key == OIS::KC_V && (mKeyboard->isKeyDown(OIS::KC_RCONTROL) || mKeyboard->isKeyDown(OIS::KC_LCONTROL))) {
 		pasteFromClipboard();
 	} else {
@@ -402,6 +412,9 @@ bool Input::keyPressed(const OIS::KeyEvent& keyEvent)
 }
 bool Input::keyReleased(const OIS::KeyEvent& keyEvent)
 {
+	if(mShouldCatchMouse && !mCatchMouse){
+		return true;
+	}
 	mSuppressForCurrentEvent = false;
 	if (mCurrentInputMode == IM_GUI) {
 		for (IInputAdapterStore::const_iterator I = mAdapters.begin(); I != mAdapters.end() && !mSuppressForCurrentEvent;I++) {
@@ -490,21 +503,35 @@ void Input::sleep(unsigned int milliseconds)
 void Input::Config_CatchMouse(const std::string& section, const std::string& key, varconf::Variable& variable)
 {
 	if (variable.is_bool()) {
-		bool enabled = static_cast<bool>(variable);
-		// if (enabled) {
-		// 	mMouseGrabbingRequested = true;
-		// } else {
-		// 	setMouseGrab(false);
-		// }
+		mShouldCatchMouse = static_cast<bool>(variable);
+		mMouse->hide(!mShouldCatchMouse);
+		mCatchMouse = mShouldCatchMouse;
+		mMouse->grab(mCatchMouse);
 	}
+}
+
+bool Input::shouldCatchMouse()
+{
+	return mShouldCatchMouse;
+}
+bool Input::getMouseCatch()
+{
+	return mCatchMouse;
+}
+void Input::setMouseCatch(bool catchMouse)
+{
+	assert(shouldCatchMouse());
+	mCatchMouse = catchMouse;
+	mMouse->grab(catchMouse);
 }
 
 void Input::setMouseGrab(bool enabled)
 {
 	if(mMouseGrab != enabled){
 		mMouseGrab = enabled;
-		mMouse->grab(enabled);
-		
+		if (!mShouldCatchMouse) {
+			mMouse->grab(enabled);
+		}
 		if (!enabled) {
 			mMouse->setPosition(mMousePosition.xPixelPosition, mMousePosition.yPixelPosition);
 		}

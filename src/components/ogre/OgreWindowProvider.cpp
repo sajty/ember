@@ -34,7 +34,9 @@ OgreWindowProvider::OgreWindowProvider(Ogre::RenderWindow& window) :
 {
 
 	Ogre::WindowEventUtilities::addWindowEventListener (&mWindow, this);
-
+	
+	//This is needed for detecting whether it has focus in OgreWindowProvider::windowFocusChange.
+	mWindow.setDeactivateOnFocusChange (true);
 }
 
 OgreWindowProvider::~OgreWindowProvider()
@@ -87,11 +89,22 @@ void OgreWindowProvider::windowClosed(Ogre::RenderWindow* rw)
 
 void OgreWindowProvider::windowFocusChange(Ogre::RenderWindow* rw)
 {
-	Input& input =Input::getSingleton();
+	bool mHasFocus = mWindow.isActive();
+	if (!mHasFocus) {
+		//We want to keep it active.
+		mWindow.setActive(true);
+	}
+	Input& input = Input::getSingleton();
 	input.setInputMode(Input::IM_GUI);
 	input.EventWindowFocusChange.emit();
 	input.setMouseGrab(false);
+	if (input.shouldCatchMouse()) {
+		input.setMouseCatch(mHasFocus);
+	}
+	
+}
+bool OgreWindowProvider::hasWindowFocus(){
+	return mHasFocus;
 }
 }
 }
-

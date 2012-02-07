@@ -144,7 +144,7 @@ struct MousePosition
  * 
  * This class also provides some methods useful for standard windowing and event system integration, such as isApplicationVisible().
  */
-class Input:
+class Input :
 	public ConsoleObject,
 	public Singleton<Input>,
 	public OIS::KeyListener,
@@ -152,6 +152,27 @@ class Input:
 {
 
 public:
+
+	/**
+	 * @brief Whether to catch the mouse.
+	 * 
+	 * This has the same value as the catchmouse in the config file.
+	 */
+	bool shouldCatchMouse();
+
+	/**
+	 * @brief Whether the mouse is catched.
+	 * 
+	 * The difference between mouse grabbing is that absolute mouse position is updated too when releasing grab.
+	 */
+	bool getMouseCatch();
+
+	/**
+	 * @brief Catches mouse.
+	 * 
+	 * The difference between mouse grabbing is that absolute mouse position is updated too when releasing grab.
+	 */
+	void setMouseCatch(bool catchMouse);
 
 	/**
 	 * @brief Command for binding keys to commands.
@@ -532,6 +553,18 @@ private:
 	 * @brief The main object of OIS.
 	 */
 	OIS::InputManager* mInputManager;
+
+	/**
+	 * @brief Whether to catch the mouse.
+	 */
+	bool mCatchMouse;
+	
+	/**
+	 * @brief Whether it should catch the mouse.
+	 * This is the same as the value of CatchMouse in the config file. 
+	 */
+	bool mShouldCatchMouse;
+
 };
 
 }

@@ -88,12 +88,22 @@ public:
 	 * This is usually requested by the user with alt+tab key combination.
 	 */
 	void windowFocusChange(Ogre::RenderWindow* rw);
+
+	/**
+	 * @brief Returns whether the window has focus.
+	 */
+	bool hasWindowFocus();
 private:
 
 	/**
 	 * @brief The window used for input events.
 	 */
 	Ogre::RenderWindow& mWindow;
+
+	/**
+	 *  @brief Whether the window has focus.
+	 */
+	bool mHasFocus;
 };
 
 }
