@@ -128,7 +128,7 @@ bool ModelEditHelper::injectMouseButtonDown(const Input::MouseButton& button)
 	return true;
 }
 
-bool ModelEditHelper::injectChar(char character)
+bool ModelEditHelper::injectChar(int character)
 {
 	return true;
 }

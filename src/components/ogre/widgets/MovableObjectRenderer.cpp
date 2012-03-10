@@ -170,7 +170,7 @@ bool MovableObjectRenderer::injectMouseButtonDown(const Input::MouseButton& butt
 	return true;
 }
 
-bool MovableObjectRenderer::injectChar(char character)
+bool MovableObjectRenderer::injectChar(int character)
 {
 	return true;
 }

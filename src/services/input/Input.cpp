@@ -83,6 +83,10 @@ void Input::attach(IWindowProvider* windowProvider, OIS::ParamList& params)
 	if (mInputManager->getNumberOfDevices(OIS::OISKeyboard) > 0) {
 		mKeyboard = static_cast<OIS::Keyboard*>(mInputManager->createInputObject (OIS::OISKeyboard, true));
 		mKeyboard->setEventCallback(this);
+		mKeyboard->setTextTranslation(OIS::Keyboard::Unicode);
+		if(mKeyboard->getTextTranslation() != OIS::Keyboard::Unicode){
+			S_LOG_WARNING("OIS is not supporting unicode characters on your OS.");
+		}
 	}
 
 	// If possible create a buffered mouse
