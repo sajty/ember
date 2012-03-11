@@ -66,7 +66,7 @@ Input::~Input()
 	delete mConfigListenerContainer;
 }
 
-void Input::attach(IWindowProvider* windowProvider, OIS::ParamList& params)
+void Input::attach(IWindowProvider* windowProvider, OIS::ParamList params)
 {
 	//mInputManager should not exist. You should call Input::detach first.
 	assert(!mInputManager);

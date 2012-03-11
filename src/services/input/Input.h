@@ -214,7 +214,7 @@ public:
 	 * @param window The target window to attach OIS.
 	 * @param params Optional, you can pass OIS parameters to it. You don't need to pass the window handle.
 	 */
-	void attach(IWindowProvider* windowProvider, OIS::ParamList& params = OIS::ParamList());
+	void attach(IWindowProvider* windowProvider, OIS::ParamList params = OIS::ParamList());
 
 	/**
 	 * @brief This will detach the input system from the window.
