@@ -98,20 +98,6 @@ AC_ARG_ENABLE(static_build,
 )
 AM_CONDITIONAL([BUILD_STATIC], [test x"$link_static" = xtrue])
 
-AC_MSG_RESULT([
-
-		**************************************
-		* Checking for SDL Libraries
-		**************************************
-
-	])
-	
-AM_PATH_SDL([1.2.0],,
-[
-  AC_MSG_ERROR(Couldn't find SDL or insufficent version found. Please goto http://www.libsdl.org/ and get at least version $SDL_VERSION)
-])
-
-#dnl don't add SDL flags yet, SDL_main confuses later checks
 
 #We check for OpenGL only because we want to check whether indirect rendering is used or not. If the code is altered to not having to check with OpenGL direct (for example going through Ogre) this check can be removed. 
 WF_CHECK_GL_SINGLE_LIB
@@ -199,6 +185,16 @@ AC_MSG_RESULT([
 AC_CHECK_HEADER(ext/hash_set, AC_DEFINE(EXT_HASH,1,"extension stl"),	)
 
 
+# Check for OIS
+OIS_VERSION=1.4.0
+PKG_CHECK_MODULES(OIS, OIS >= $OIS_VERSION,
+	[
+		CXXFLAGS="$CXXFLAGS $OIS_CFLAGS"
+		LIBS="$LIBS $OIS_LIBS"
+	],
+	[
+		AC_MSG_ERROR([Couldn't find OIS or tests failed. Error: $OIS_PKG_ERRORS. Check config.log to see why the tests failed, and fix it.])
+	])
 
 # Check for OpenAL
 OPENAL_VERSION=0.0.8
@@ -508,16 +504,6 @@ if test "$ac_use_gprof_code" = "yes"; then
       CFLAGS="$CFLAGS -pg -g"
       CXXFLAGS="$CXXFLAGS -pg -g"
 fi
-
-
-
-
-
-
-#dnl add SDL flags here, now that we're done with the other tests
-CXXFLAGS="$CXXFLAGS $SDL_CFLAGS"
-LIBS="$LIBS $SDL_LIBS"
-    
 
 AC_MSG_RESULT([
 
