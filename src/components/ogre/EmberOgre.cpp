@@ -185,6 +185,8 @@ EmberOgre::~EmberOgre()
 
 	delete mScreen;
 
+	Input::getSingleton().detach();
+
 	if(mOgreSetup){
 		mOgreSetup->shutdown();
 		delete mOgreSetup;
