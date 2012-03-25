@@ -486,6 +486,14 @@ private:
 	void Config_CatchMouse(const std::string& section, const std::string& key, varconf::Variable& variable);
 
 	/**
+	 * @brief Allows to invert relative mouse position.
+	 * @param section
+	 * @param key
+	 * @param variable
+	 */
+	void Config_InvertCamera(const std::string& section, const std::string& key, varconf::Variable& variable);
+
+	/**
 	 * @brief The last positions of the mouse.
 	 */
 	MousePosition mMousePosition;
@@ -558,6 +566,13 @@ private:
 	 * @brief Whether to catch the mouse.
 	 */
 	bool mCatchMouse;
+
+	/**
+	 * @brief Whether to invert relative movement.
+	 * 
+	 * It can be 1(normal) or -1(inverted).
+	 */
+	int mInvertMouse;
 	
 	/**
 	 * @brief Whether it should catch the mouse.

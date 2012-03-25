@@ -49,7 +49,7 @@ const std::string Input::BINDCOMMAND("bind");
 const std::string Input::UNBINDCOMMAND("unbind");
 
 Input::Input() :
-	mCurrentInputMode(IM_GUI),
+	mCurrentInputMode(IM_GUI), mInvertMouse(1),
 	mSuppressForCurrentEvent(false), mMovementModeEnabled(false),
 	mMouseGrab(false), mCatchMouse(false), mWindowProvider(NULL),
 	mInputManager(NULL), mKeyboard(NULL), mMouse(NULL),
@@ -186,6 +186,7 @@ bool Input::isApplicationVisible()
 void Input::startInteraction()
 {
 	mConfigListenerContainer->registerConfigListenerWithDefaults("input", "catchmouse", sigc::mem_fun(*this, &Input::Config_CatchMouse), true);
+	mConfigListenerContainer->registerConfigListenerWithDefaults("input", "invertcamera", sigc::mem_fun(*this, &Input::Config_InvertCamera), true);
 }
 
 void Input::processInput()
@@ -230,7 +231,7 @@ bool Input::mouseMoved(const OIS::MouseEvent& e)
 	float width = e.state.width;
 	float height = e.state.height;
 
-	//TODO: Remove this and freezeMouse. Istead use new InputMode and grab input.
+	//TODO: Remove this and freezeMouse. Instead use new InputMode and grab input.
 	MousePosition oldPos(mMousePosition);
 
 	//We need to update position first, since we don't want to send old position.
@@ -246,10 +247,10 @@ bool Input::mouseMoved(const OIS::MouseEvent& e)
 		MouseMotion motion;
 		motion.xPosition = e.state.X.abs;
 		motion.yPosition = e.state.Y.abs;
-		motion.xRelativeMovementInPixels = e.state.X.rel;
-		motion.yRelativeMovementInPixels = e.state.Y.rel;
-		motion.xRelativeMovement = e.state.X.rel / width;
-		motion.yRelativeMovement = e.state.Y.rel / height;
+		motion.xRelativeMovementInPixels = e.state.X.rel * mInvertMouse;
+		motion.yRelativeMovementInPixels = e.state.Y.rel * mInvertMouse;
+		motion.xRelativeMovement = motion.xRelativeMovementInPixels / width;
+		motion.yRelativeMovement = motion.yRelativeMovementInPixels / height;
 		
 		EventMouseMoved.emit(motion, mCurrentInputMode);
 
@@ -508,6 +509,16 @@ void Input::Config_CatchMouse(const std::string& section, const std::string& key
 {
 	if (variable.is_bool()) {
 		mShouldCatchMouse = static_cast<bool>(variable);
+		mMouse->hide(!mShouldCatchMouse);
+		mCatchMouse = mShouldCatchMouse;
+		mMouse->grab(mCatchMouse);
+	}
+}
+
+void Input::Config_InvertCamera(const std::string& section, const std::string& key, varconf::Variable& variable)
+{
+	if (variable.is_bool()) {
+		mInvertMouse = static_cast<bool>(variable) ? -1 : 1;
 		mMouse->hide(!mShouldCatchMouse);
 		mCatchMouse = mShouldCatchMouse;
 		mMouse->grab(mCatchMouse);
