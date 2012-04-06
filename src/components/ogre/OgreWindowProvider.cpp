@@ -99,7 +99,14 @@ void OgreWindowProvider::windowFocusChange(Ogre::RenderWindow* rw)
 	input.EventWindowFocusChange.emit();
 	input.setMouseGrab(false);
 	if (input.shouldCatchMouse()) {
+#ifdef _WIN32
 		input.setMouseCatch(mHasFocus);
+#else
+		//on linux, to activate catch, you need to click inside the window!
+		if(mHasFocus){
+			input.setMouseCatch(false);
+		}
+#endif
 	}
 	
 }
