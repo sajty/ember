@@ -383,8 +383,12 @@ bool Input::keyPressed(const OIS::KeyEvent& keyEvent)
 	if(mShouldCatchMouse && !mCatchMouse){
 		return true;
 	}
-	if (keyEvent.key == OIS::KC_V && (mKeyboard->isKeyDown(OIS::KC_RCONTROL) || mKeyboard->isKeyDown(OIS::KC_LCONTROL))) {
+	if (keyEvent.key == OIS::KC_V && isModifierDown(OIS::Keyboard::Ctrl)) {
 		pasteFromClipboard();
+	} else if (mShouldCatchMouse && keyEvent.key == OIS::KC_TAB && isModifierDown(OIS::Keyboard::Alt) ) {
+		setInputMode(IM_GUI);
+		EventWindowFocusChange.emit();
+		setMouseCatch(false);
 	} else {
 		mSuppressForCurrentEvent = false;
 		if (mCurrentInputMode == IM_GUI) {
