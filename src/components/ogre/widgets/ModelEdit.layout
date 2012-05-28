@@ -346,6 +346,173 @@
                             <Property Name='Tooltip' Value='Press and hold to rotate.' />
                         </Window>
                     </Window>
+                <Window Type="EmberLook/TabContentPane" Name="LODInfoInner" >
+                    <Property Name="Font" Value="DejaVuSans-14" />
+                    <Property Name="Text" Value="Level of Detail" />
+                    <Property Name="UnifiedAreaRect" Value="{{0,0},{0,0},{1,0},{1,-2}}" />
+                    <Window Type="EmberLook/Checkbox" Name="EnableAutomaticLOD" >
+                        <Property Name="Text" Value="Enable Automatic Mesh LOD Management" />
+                        <Property Name="UnifiedAreaRect" Value="{{0.0126497,0},{0.0213705,0},{0.262649,0},{0.0955689,0}}" />
+                    </Window>
+                    <Window Type="EmberLook/Static" Name="ManualLODContainer" >
+                        <Property Name="UnifiedAreaRect" Value="{{0,4},{0.107774,0},{1,-4},{1,-2}}" />
+                        <Property Name="BackgroundEnabled" Value="False" />
+                        <Window Type="EmberLook/Listbox" Name="LODDistances" >
+                            <Property Name="Sort" Value="True" />
+                            <Property Name="UnifiedAreaRect" Value="{{0.00709466,0},{0.107131,0},{0.141162,0},{0.703939,0}}" />
+                        </Window>
+                        <Window Type="EmberLook/Static" Name="LODConfigContainer" >
+                            <Property Name="UnifiedAreaRect" Value="{{0.148038,0},{0,4},{1,-4},{1,-4}}" />
+                            <Property Name="BackgroundEnabled" Value="False" />
+                            <Window Type="EmberLook/Combobox" Name="LODTypeCombobox" >
+                                <Property Name="Text" Value="Automatic vertex reduction" />
+                                <Property Name="ReadOnly" Value="True" />
+                                <Property Name="UnifiedAreaRect" Value="{{0,4},{0,9},{0.255268,0},{0.268711,0}}" />
+                                <Property Name="MaxEditTextLength" Value="1073741823" />
+                            </Window>
+                            <Window Type="EmberLook/Static" Name="ManuallyCreatedLODContainer" >
+                                <Property Name="Visible" Value="False" />
+                                <Property Name="UnifiedAreaRect" Value="{{0,4},{0.172712,0},{1,-4},{1,-4}}" />
+                                <Property Name="BackgroundEnabled" Value="False" />
+                                <Window Type="EmberLook/StaticText" Name="MeshName_text" >
+                                    <Property Name="Text" Value="Mesh name:" />
+                                    <Property Name="HorzExtent" Value="52" />
+                                    <Property Name="VertExtent" Value="9.3125" />
+                                    <Property Name="FrameEnabled" Value="False" />
+                                    <Property Name="HorzFormatting" Value="RightAligned" />
+                                    <Property Name="UnifiedAreaRect" Value="{{0.067806,0},{0.050755,0},{0.16,0},{0.14331,0}}" />
+                                    <Property Name="BackgroundEnabled" Value="False" />
+                                    <Property Name="HorzScrollPageSize" Value="51" />
+                                    <Property Name="HorzScrollPosition" Value="0" />
+                                    <Property Name="VertScrollPageSize" Value="14" />
+                                    <Property Name="VertScrollPosition" Value="0" />
+                                    <Property Name="HorzScrollDocumentSize" Value="52" />
+                                    <Property Name="VertScrollDocumentSize" Value="9.3125" />
+                                </Window>
+                                <Window Type="EmberLook/StaticText" Name="ManuallyCreatedLODDescription_text" >
+                                    <Property Name="Text" >Manually created LOD allows you to create
+each LOD level in blender as separated meshes.</Property>
+                                    <Property Name="HorzExtent" Value="199" />
+                                    <Property Name="VertExtent" Value="18.625" />
+                                    <Property Name="FrameEnabled" Value="False" />
+                                    <Property Name="HorzFormatting" Value="HorzCentred" />
+                                    <Property Name="UnifiedAreaRect" Value="{{0.682862,0},{0.0311913,0},{0.989639,0},{0.214714,0}}" />
+                                    <Property Name="BackgroundEnabled" Value="False" />
+                                    <Property Name="HorzScrollPageSize" Value="168" />
+                                    <Property Name="HorzScrollPosition" Value="0" />
+                                    <Property Name="VertScrollPageSize" Value="27" />
+                                    <Property Name="VertScrollPosition" Value="0" />
+                                    <Property Name="HorzScrollDocumentSize" Value="199" />
+                                    <Property Name="VertScrollDocumentSize" Value="18.625" />
+                                </Window>
+                                <Window Type="EmberLook/Editbox" Name="LODMeshName" >
+                                    <Property Name="MaxTextLength" Value="1073741823" />
+                                    <Property Name="UnifiedAreaRect" Value="{{0.17,0},{0.036127,0},{0.316173,0},{0.157702,0}}" />
+                                    <Property Name="TextParsingEnabled" Value="False" />
+                                </Window>
+                            </Window>
+                            <Window Type="EmberLook/Static" Name="AutomaticVertexReductionContainer" >
+                                <Property Name="UnifiedAreaRect" Value="{{0,4},{0.172712,0},{1,-4},{1,-4}}" />
+                                <Property Name="BackgroundEnabled" Value="False" />
+                                <Window Type="EmberLook/StaticText" Name="LODVertexReductionDescription_text" >
+                                    <Property Name="Text" >Automatic vertex reduction uses an algorithm to reduce vertex count.
+There are two algorithms availible and each has a different parameter:
+
+-Proportional: You need to pass the percent of remaining vertexes.
+-Constant: You need to pass a fixed vertex count.</Property>
+                                    <Property Name="HorzExtent" Value="302" />
+                                    <Property Name="VertExtent" Value="37.25" />
+                                    <Property Name="FrameEnabled" Value="False" />
+                                    <Property Name="VertFormatting" Value="TopAligned" />
+                                    <Property Name="UnifiedAreaRect" Value="{{0.518478,0},{0.0651381,0},{0.989106,0},{0.532268,0}}" />
+                                    <Property Name="BackgroundEnabled" Value="False" />
+                                    <Property Name="HorzScrollPageSize" Value="258" />
+                                    <Property Name="HorzScrollPosition" Value="0" />
+                                    <Property Name="VertScrollPageSize" Value="69" />
+                                    <Property Name="VertScrollPosition" Value="0" />
+                                    <Property Name="HorzScrollDocumentSize" Value="302" />
+                                    <Property Name="VertScrollDocumentSize" Value="37.25" />
+                                </Window>
+                                <Window Type="EmberLook/Combobox" Name="LODReductionTypeCombobox" >
+                                    <Property Name="Text" >Proportional</Property>
+                                    <Property Name="ReadOnly" Value="True" />
+                                    <Property Name="UnifiedAreaRect" Value="{{0.17,0},{0.037798,0},{0.31724,0},{0.301544,0}}" />
+                                    <Property Name="MaxEditTextLength" Value="1073741823" />
+                                </Window>
+                                <Window Type="EmberLook/StaticText" Name="LODReductionType_text" >
+                                    <Property Name="Text" Value="Reduction algorithm:" />
+                                    <Property Name="HorzExtent" Value="91" />
+                                    <Property Name="VertExtent" Value="9.3125" />
+                                    <Property Name="FrameEnabled" Value="False" />
+                                    <Property Name="HorzFormatting" Value="RightAligned" />
+                                    <Property Name="UnifiedAreaRect" Value="{{0.006019,0},{0.057947,0},{0.16,0},{0.150501,0}}" />
+                                    <Property Name="BackgroundEnabled" Value="False" />
+                                    <Property Name="HorzScrollPageSize" Value="85" />
+                                    <Property Name="HorzScrollPosition" Value="0" />
+                                    <Property Name="VertScrollPageSize" Value="14" />
+                                    <Property Name="VertScrollPosition" Value="0" />
+                                    <Property Name="HorzScrollDocumentSize" Value="91" />
+                                    <Property Name="VertScrollDocumentSize" Value="9.3125" />
+                                </Window>
+                                <Window Type="EmberLook/StaticText" Name="LODReductionParameter_text" >
+                                    <Property Name="Text" Value="Parameter:" />
+                                    <Property Name="HorzExtent" Value="47" />
+                                    <Property Name="VertExtent" Value="9.3125" />
+                                    <Property Name="FrameEnabled" Value="False" />
+                                    <Property Name="HorzFormatting" Value="RightAligned" />
+                                    <Property Name="UnifiedAreaRect" Value="{{0.005486,0},{0.204266,0},{0.16,0},{0.296821,0}}" />
+                                    <Property Name="BackgroundEnabled" Value="False" />
+                                    <Property Name="HorzScrollPageSize" Value="85" />
+                                    <Property Name="HorzScrollPosition" Value="0" />
+                                    <Property Name="VertScrollPageSize" Value="14" />
+                                    <Property Name="VertScrollPosition" Value="0" />
+                                    <Property Name="HorzScrollDocumentSize" Value="47" />
+                                    <Property Name="VertScrollDocumentSize" Value="9.3125" />
+                                </Window>
+                                <Window Type="EmberLook/Editbox" Name="LODReductionParameterTextbox" >
+                                    <Property Name="MaxTextLength" Value="1073741823" />
+                                    <Property Name="UnifiedAreaRect" Value="{{0.17,0},{0.189298,0},{0.318308,0},{0.310872,0}}" />
+                                    <Property Name="TextParsingEnabled" Value="False" />
+                                </Window>
+                            </Window>
+                        </Window>
+                        <Window Type="EmberLook/StaticText" Name="LODDistances_text" >
+                            <Property Name="Text" >LOD Distances</Property>
+                            <Property Name="HorzExtent" Value="60" />
+                            <Property Name="VertExtent" Value="9.3125" />
+                            <Property Name="FrameEnabled" Value="False" />
+                            <Property Name="HorzFormatting" Value="HorzCentred" />
+                            <Property Name="UnifiedAreaRect" Value="{{0.00861785,0},{0.0221597,0},{0.137764,0},{0.0986613,0}}" />
+                            <Property Name="BackgroundEnabled" Value="False" />
+                            <Property Name="HorzScrollPageSize" Value="85" />
+                            <Property Name="HorzScrollPosition" Value="0" />
+                            <Property Name="VertScrollPageSize" Value="15" />
+                            <Property Name="VertScrollPosition" Value="0" />
+                            <Property Name="HorzScrollDocumentSize" Value="60" />
+                            <Property Name="VertScrollDocumentSize" Value="9.3125" />
+                        </Window>
+                        <Window Type="EmberLook/Button" Name="LODAddButton" >
+                            <Property Name="Text" Value="Add" />
+                            <Property Name="UnifiedAreaRect" Value="{{0.00639016,0},{0.729041,0},{0.0709729,0},{0.832929,0}}" />
+                        </Window>
+                        <Window Type="EmberLook/Button" Name="LODDeleteButton" >
+                            <Property Name="Text" Value="Delete" />
+                            <Property Name="UnifiedAreaRect" Value="{{0.0764352,0},{0.729041,0},{0.141018,0},{0.832929,0}}" />
+                        </Window>
+                        <Window Type="EmberLook/Button" Name="LODCopyButton" >
+                            <Property Name="Text" Value="Copy" />
+                            <Property Name="UnifiedAreaRect" Value="{{0.00639016,0},{0.864582,0},{0.0709729,0},{0.96847,0}}" />
+                        </Window>
+                        <Window Type="EmberLook/Button" Name="LODPasteButton" >
+                            <Property Name="Text" >Paste</Property>
+                            <Property Name="UnifiedAreaRect" Value="{{0.0764352,0},{0.864582,0},{0.141018,0},{0.96847,0}}" />
+                        </Window>
+                    </Window>
+                    <Window Type="EmberLook/Button" Name="LODSaveButton" >
+                        <Property Name="Text" >Save changes</Property>
+                        <Property Name="UnifiedAreaRect" Value="{{0.90061,0},{0,4},{1,-4},{0.091327,0}}" />
+                    </Window>
+                </Window>
                 </Window>
                 <Window Type='DefaultWindow' Name='SubModelInfo'>
                     <Property Name='UnifiedSize' Value='{{1,0},{1,0}}' />
@@ -463,7 +630,7 @@
                         <Property Name='UnifiedSize' Value='{{0,45},{0,25}}' />
                         <Property Name='UnifiedPosition' Value='{{0,80},{0,30}}' />
                     </Window>
-                </Window>               
+                </Window>
             </Window>
             <Window Type='EmberLook/Editbox' Name='FilterModels'>
                 <Property Name='MaxTextLength' Value='1073741823' />
@@ -485,33 +652,40 @@
                 <Property Name='Text' Value='Reload' />
                 <Property Name='UnifiedAreaRect' Value='{{0.155,0.0},{0.007164,0.0},{0.217346,0.0},{0.048956,0.0}}' />
             </Window>
-            <Window Type='EmberLook/FrameWindow' Name='NewModelWindow'>
-                <Property Name='CaptionColour' Value='00FFFFFF' />
-                <Property Name='Text' Value='New Model' />
-                <Property Name='TitlebarEnabled' Value='True' />
-                <Property Name='UnifiedAreaRect' Value='{{0.299011,0.0},{0.297325,0.0},{0.687443,0.0},{0.547325,0.0}}' />
-                <Property Name='UnifiedMaxSize' Value='{{1.0,0.0},{1.0,0.0}}' />
-                <Property Name='Visible' Value='False' />
-                <Window Type='EmberLook/StaticText' Name='NewModelName_text'>
-                    <Property Name='FrameEnabled' Value='False' />
-                    <Property Name='Text' Value='Name: ' />
-                    <Property Name='UnifiedAreaRect' Value='{{0.089063,0.0},{0.188041,0.0},{0.251609,0.0},{0.438041,0.0}}' />
-                    <Property Name='UnifiedMaxSize' Value='{{1.0,0.0},{1.0,0.0}}' />
+            <Window Type="EmberLook/FrameWindow" Name="InpuWindow" >
+                <Property Name="Text" Value="Input" />
+                <Property Name="Visible" Value="False" />
+                <Property Name="TitlebarFont" Value="DejaVuSans-14" />
+                <Property Name="CaptionColour" Value="00FFFFFF" />
+                <Property Name="TitlebarEnabled" Value="True" />
+                <Property Name="UnifiedAreaRect" Value="{{0.5,-200},{0.5,-100},{0.5,100},{0.5,50}}" />
+                <Window Type="EmberLook/StaticText" Name="InputQuestion_text" >
+                    <Property Name="Text" Value="Please enter the name of the model." />
+                    <Property Name="HorzExtent" Value="152" />
+                    <Property Name="VertExtent" Value="9.3125" />
+                    <Property Name="FrameEnabled" Value="False" />
+                    <Property Name="HorzFormatting" Value="HorzCentred" />
+                    <Property Name="VertFormatting" Value="BottomAligned" />
+                    <Property Name="UnifiedAreaRect" Value="{{0,0},{0,0},{1,0},{0,40}}" />
+                    <Property Name="HorzScrollPageSize" Value="292" />
+                    <Property Name="HorzScrollPosition" Value="0" />
+                    <Property Name="VertScrollPageSize" Value="40" />
+                    <Property Name="VertScrollPosition" Value="0" />
+                    <Property Name="HorzScrollDocumentSize" Value="152" />
+                    <Property Name="VertScrollDocumentSize" Value="9.3125" />
                 </Window>
-                <Window Type='EmberLook/Editbox' Name='NewModelName'>
-                    <Property Name='MaxTextLength' Value='1073741823' />
-                    <Property Name='UnifiedAreaRect' Value='{{0.263982,0.0},{0.244275,0.0},{0.835789,0.0},{0.433206,0.0}}' />
-                    <Property Name='UnifiedMaxSize' Value='{{1.0,0.0},{1.0,0.0}}' />
+                <Window Type="EmberLook/Editbox" Name="InputAnswerTextbox" >
+                    <Property Name="MaxTextLength" Value="1073741823" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.5,-100},{0,44},{0.5,100},{0.569081,0}}" />
+                    <Property Name="TextParsingEnabled" Value="False" />
                 </Window>
-                <Window Type='EmberLook/Button' Name='NewModelOk'>
-                    <Property Name='Text' Value='Ok' />
-                    <Property Name='UnifiedAreaRect' Value='{{0.203079,0.0},{0.619084,0.0},{0.420395,0.0},{0.818193,0.0}}' />
-                    <Property Name='UnifiedMaxSize' Value='{{1.0,0.0},{1.0,0.0}}' />
+                <Window Type="EmberLook/Button" Name="InputOkButton" >
+                    <Property Name="Text" Value="Ok" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.5,-60},{0,75},{0.5,-10},{0,100}}" />
                 </Window>
-                <Window Type='EmberLook/Button' Name='NewModelCancel'>
-                    <Property Name='Text' Value='Cancel' />
-                    <Property Name='UnifiedAreaRect' Value='{{0.472090,0.0},{0.603817,0.0},{0.689407,0.0},{0.802926,0.0}}' />
-                    <Property Name='UnifiedMaxSize' Value='{{1.0,0.0},{1.0,0.0}}' />
+                <Window Type="EmberLook/Button" Name="InputCancelButton" >
+                    <Property Name="Text" Value="Cancel" />
+                    <Property Name="UnifiedAreaRect" Value="{{0.5,10},{0,75},{0.5,60},{0,100}}" />
                 </Window>
             </Window>
         </Window>
