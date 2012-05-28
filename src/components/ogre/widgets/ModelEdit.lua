@@ -260,12 +260,10 @@ function ModelEdit:AddSubmodelButton_Clicked(args)
 		self:updateModelContentList()
 	end
 	return true
-
 end
 
-function ModelEdit:NewModelOk_Clicked(args)
+function ModelEdit:AddModel(name) 
 	local modelDefMgr = Ember.OgreView.Model.ModelDefinitionManager:getSingleton()
-	local name = self.widget:getWindow("NewModelName"):getText()
 	local def = modelDefMgr:create(name, "ModelDefinitions"):get()
 	if def then
 		def:setValid(true)
@@ -277,7 +275,7 @@ function ModelEdit:NewModelOk_Clicked(args)
 			item:setSelected(true)
 			self.models:ensureItemIsVisible(item)	
 		end
-		self.widget:getWindow("NewModelWindow"):setVisible(false)
+		self.widget:getWindow("InpuWindow"):setVisible(false)
 		self:loadModelDefinition(item:getText())
 		self:reloadModel()
 		self:updateModelContentList()
@@ -285,6 +283,17 @@ function ModelEdit:NewModelOk_Clicked(args)
 	return true
 end
 
+function ModelEdit:getInput(question, answerFunc)
+	if not self.waitingAnswer then
+		self.waitingAnswer = true
+		self.answerFunc = answerFunc
+		
+		self.widget:getWindow("InputQuestion_text"):setText(question)
+		self.widget:getWindow("InputAnswerTextbox"):setText("")
+		self.widget:getWindow("InpuWindow"):setVisible(true)
+		self.widget:getWindow("InpuWindow"):moveToFront()
+	end
+end
 
 function ModelEdit:previewMesh(meshname)
 	self.submeshRenderer:showEntity(meshname)
@@ -723,8 +732,7 @@ function ModelEdit:buildWidget()
 			return true
 		end)
 		self.widget:getWindow("AddModelButton"):subscribeEvent("Clicked", function(args)
-			self.widget:getWindow("NewModelWindow"):setVisible(true)
-			self.widget:getWindow("NewModelWindow"):moveToFront()
+			self:getInput("Please enter the name of the model.", self.AddModel)
 			return true
 		end)
 		self.widget:getWindow("ReloadModelListButton"):subscribeEvent("Clicked", function(args)
@@ -741,9 +749,16 @@ function ModelEdit:buildWidget()
 			end	
 			return true
 		end)
-		self.widget:getWindow("NewModelOk"):subscribeEvent("Clicked", self.NewModelOk_Clicked, self)
-		self.widget:getWindow("NewModelCancel"):subscribeEvent("Clicked", function(args)
-			self.widget:getWindow("NewModelWindow"):setVisible(false)
+		self.widget:getWindow("InputOkButton"):subscribeEvent("Clicked", function(args)
+			self.widget:getWindow("InpuWindow"):setVisible(false)
+			self.waitingAnswer = false
+			local name = self.widget:getWindow("InputAnswerTextbox"):getText()
+			self:answerFunc(name)
+			return true
+		end)
+		self.widget:getWindow("InputCancelButton"):subscribeEvent("Clicked", function(args)
+			self.widget:getWindow("InpuWindow"):setVisible(false)
+			self.waitingAnswer = false
 			return true
 		end)
 		self.widget:getWindow("RemoveSubmodelButton"):subscribeEvent("Clicked", function(args)
@@ -986,7 +1001,6 @@ function ModelEdit:buildWidget()
 					
 					self.widget:getWindow("PlayAction"):setText("Stop")
 				end
-
 			end
 			return true
 		end)
@@ -1009,7 +1023,63 @@ function ModelEdit:buildWidget()
 			return true
 		end)
 		
-
+		-- subscribe LOD events.
+		self.widget:getWindow("EnableAutomaticLOD"):subscribeEvent("CheckStateChanged", function(args)
+			local container = self.widget:getWindow("ManualLODContainer")
+            local isDisabled = container:isDisabled()
+            container:setEnabled(isDisabled)
+            return true
+		end)
+		
+		self.widget:getWindow("LODAddButton"):subscribeEvent("Clicked", function(args)
+			self:getInput("Please enter the distance.", self.LODAdd)
+			return true
+		end)
+		
+		self.widget:getWindow("LODDeleteButton"):subscribeEvent("Clicked", function(args)
+			local dist = self:LODGetSelected()
+			if tonumber(dist) >= 0 then
+				local listbox = self.widget:getWindow("LODDistances")
+				listbox = CEGUI.toListbox(listbox)
+				listbox:removeItem(self.lod[dist].item)
+				self.lod[dist] = nil
+			end
+			return true
+		end)
+		
+		self.widget:getWindow("LODCopyButton"):subscribeEvent("Clicked", function(args)
+			local distance = self:LODGetSelected()
+			if tonumber(distance) >= 0 then
+				self:LODSave(distance)
+				self.clipboard = {}
+				self.clipboard.type = self.lod[distance].type
+				self.clipboard.meshName = self.lod[distance].meshName
+				self.clipboard.algorithm = self.lod[distance].algorithm
+				self.clipboard.parameter = self.lod[distance].parameter
+			end
+			return true
+		end)
+		
+		self.widget:getWindow("LODPasteButton"):subscribeEvent("Clicked", function(args)
+			self:getInput("Please enter the distance.", self.LODPaste)
+			return true
+		end)
+		
+		self.widget:getWindow("LODTypeCombobox"):subscribeEvent("ListSelectionAccepted", function(args)
+			self:LODTypes_SelectionChanged()
+			return true
+		end)
+		
+		self.widget:getWindow("LODDistances"):subscribeEvent("ItemSelectionChanged", function(args)
+			self:LODSave(self.selectedDistance)
+			self.selectedDistance = self:LODGetSelected()
+			self:LODLoad(self.selectedDistance)
+			return true
+		end)
+		
+		-- Fill LOD Comboboxes.
+		self:fillLODTypeCombobox()
+		self:fillLODReductionTypeCombobox()
 		
 		self:fillMaterialList()
 		self:fillModellist()
@@ -1055,6 +1125,136 @@ function ModelEdit:fillScaleTypesList()
 
 end
 
+function ModelEdit:fillLODTypeCombobox()
+	self.LODTypes = self.widget:getWindow("LODTypeCombobox")
+	self.LODTypes = CEGUI.toCombobox(self.LODTypes)
+	
+	local item = Ember.OgreView.Gui.ColouredListItem:new("Automatic vertex reduction", 0)
+	self.LODTypes:addItem(item)
+	
+	local item = Ember.OgreView.Gui.ColouredListItem:new("Manually created LOD", 1)
+	self.LODTypes:addItem(item)
+end
+
+function ModelEdit:fillLODReductionTypeCombobox()
+	self.LODReductionTypes = self.widget:getWindow("LODReductionTypeCombobox")
+	self.LODReductionTypes = CEGUI.toCombobox(self.LODReductionTypes)
+	
+	local item = Ember.OgreView.Gui.ColouredListItem:new("Proportional", 0)
+	self.LODReductionTypes:addItem(item)
+	
+	local item = Ember.OgreView.Gui.ColouredListItem:new("Constant", 1)
+	self.LODReductionTypes:addItem(item)
+end
+
+function ModelEdit:LODSave(dist)
+	if dist == nil or tonumber(dist) < 0 or self.lod[dist] == nil then return end
+	
+	local combobox = self.widget:getWindow("LODTypeCombobox")
+	combobox = CEGUI.toCombobox(combobox)
+	local item = combobox:getSelectedItem();
+	self.lod[dist].type = combobox:getItemIndex(item)
+	
+	local combobox = self.widget:getWindow("LODReductionTypeCombobox")
+	combobox = CEGUI.toCombobox(combobox)
+	local item = combobox:getSelectedItem();
+	self.lod[dist].algorithm = combobox:getItemIndex(item)
+	
+	local editbox = self.widget:getWindow("LODReductionParameterTextbox")
+	self.lod[dist].parameter = editbox:getText()
+	
+	local editbox = self.widget:getWindow("LODMeshName")
+	self.lod[dist].meshName = editbox:getText()
+end
+
+function ModelEdit:LODLoad(dist)
+	if dist == nil or tonumber(dist) < 0 or self.lod[dist] == nil then return end
+	
+	local combobox = self.widget:getWindow("LODTypeCombobox")
+	combobox = CEGUI.toCombobox(combobox)
+	combobox:setItemSelectState(self.lod[dist].type, true)
+	
+	local combobox = self.widget:getWindow("LODReductionTypeCombobox")
+	combobox = CEGUI.toCombobox(combobox)
+	combobox:setItemSelectState(self.lod[dist].algorithm, true)
+	
+	local editbox = self.widget:getWindow("LODReductionParameterTextbox")
+	editbox:setText(self.lod[dist].parameter)
+	
+	local editbox = self.widget:getWindow("LODMeshName")
+	editbox:setText(self.lod[dist].meshName)
+	
+	self:LODTypes_SelectionChanged()
+end
+
+function ModelEdit:LODTypes_SelectionChanged()
+	local combobox = self.widget:getWindow("LODTypeCombobox")
+	local selected = combobox:getText()
+	local automatic = self.widget:getWindow("AutomaticVertexReductionContainer")
+	local manual = self.widget:getWindow("ManuallyCreatedLODContainer")
+	if ( selected == "Automatic vertex reduction" ) then
+		-- Automatic vertex reduction.
+		automatic:setVisible(true);
+		manual:setVisible(false);
+	else -- if ( selected == "Manually created LOD" ) then
+		-- Manually created LOD.
+		manual:setVisible(true);
+		automatic:setVisible(false);
+	end
+end
+
+function ModelEdit:LODGetSelected()
+	local listbox = self.widget:getWindow("LODDistances")
+	listbox = CEGUI.toListbox(listbox)
+	local item = listbox:getFirstSelectedItem()
+	if (item == nil) then
+		return -1
+	else
+		return item:getText()
+	end
+end
+
+function ModelEdit:LODAdd(distance)
+	distance = tostring(distance)
+	if distance:find("^(%d+)$") and distance:len() < 8 and self.lod[distance] == nil then
+		local listbox = self.widget:getWindow("LODDistances")
+		listbox = CEGUI.toListbox(listbox)
+		self.lod[distance] = {}
+		self.lod[distance].type = 0
+		self.lod[distance].meshName = ""
+		self.lod[distance].algorithm = 0
+		self.lod[distance].parameter = 0.5
+		self.lod[distance].item = Ember.OgreView.Gui.ColouredListItem:new(distance, distance)
+		local selected = self:LODGetSelected()
+		self:LODSave(selected)
+		listbox:addItem(self.lod[distance].item)
+		listbox:clearAllSelections()
+		listbox:setItemSelectState(self.lod[distance].item, true)
+		self:LODLoad(distance)
+	else
+		-- Not an integer number passed or distance already exists.
+	end
+	return true
+end
+
+function ModelEdit:LODPaste(distance)
+	distance = tostring(distance)
+	if distance:find("^(%d+)$") and distance:len() < 8 and self.lod[distance] == nil then
+		local listbox = self.widget:getWindow("LODDistances")
+		listbox = CEGUI.toListbox(listbox)
+		self.lod[distance] = self.clipboard;
+		self.lod[distance].item = Ember.OgreView.Gui.ColouredListItem:new(distance, distance)
+		local selected = self:LODGetSelected()
+		self:LODSave(selected)
+		listbox:addItem(self.lod[distance].item)
+		listbox:clearAllSelections()
+		listbox:setItemSelectState(self.lod[distance].item, true)
+		self:LODLoad(distance)
+	else
+		-- Not an integer number passed or distance already exists.
+	end
+end
+
 function ModelEdit:shutdown()
 	self.definitionPtr = nil
 	deleteSafe(self.modelHelper)
@@ -1080,7 +1280,9 @@ function ModelEdit:shutdown()
 end
 
 connect(connectors, emberOgre.EventGUIManagerInitialized, function(guiManager)
-	local modelEdit = {connectors={}, 
+	local modelEdit = {connectors={},
+		lod={},
+		input={},
 		zoomRatio = 10, 
 		modelContentsItems = {}
 	}
