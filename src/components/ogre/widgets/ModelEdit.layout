@@ -357,6 +357,7 @@
                     <Window Type="EmberLook/Static" Name="ManualLODContainer" >
                         <Property Name="UnifiedAreaRect" Value="{{0,4},{0.107774,0},{1,-4},{1,-2}}" />
                         <Property Name="BackgroundEnabled" Value="False" />
+                        <Property Name="Disabled" Value="True" />
                         <Window Type="EmberLook/Listbox" Name="LODDistances" >
                             <Property Name="Sort" Value="True" />
                             <Property Name="UnifiedAreaRect" Value="{{0.00709466,0},{0.107131,0},{0.141162,0},{0.703939,0}}" />

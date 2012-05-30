@@ -1026,9 +1026,11 @@ function ModelEdit:buildWidget()
 		-- subscribe LOD events.
 		self.widget:getWindow("EnableAutomaticLOD"):subscribeEvent("CheckStateChanged", function(args)
 			local container = self.widget:getWindow("ManualLODContainer")
-            local isDisabled = container:isDisabled()
-            container:setEnabled(isDisabled)
-            return true
+			local isDisabled = container:isDisabled()
+			container:setEnabled(isDisabled)
+			self.selectedDistance = self:LODGetSelected()
+			self:LODLoad(self.selectedDistance)
+			return true
 		end)
 		
 		self.widget:getWindow("LODAddButton"):subscribeEvent("Clicked", function(args)
@@ -1168,7 +1170,13 @@ function ModelEdit:LODSave(dist)
 end
 
 function ModelEdit:LODLoad(dist)
-	if dist == nil or tonumber(dist) < 0 or self.lod[dist] == nil then return end
+	local container = self.widget:getWindow("LODConfigContainer")
+	if dist == nil or tonumber(dist) < 0 or self.lod[dist] == nil then
+		container:setEnabled(false)
+		return
+	else
+		container:setEnabled(true)
+	end
 	
 	local combobox = self.widget:getWindow("LODTypeCombobox")
 	combobox = CEGUI.toCombobox(combobox)
