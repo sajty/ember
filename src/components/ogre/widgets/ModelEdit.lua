@@ -1028,8 +1028,7 @@ function ModelEdit:buildWidget()
 			local container = self.widget:getWindow("ManualLODContainer")
 			local isDisabled = container:isDisabled()
 			container:setEnabled(isDisabled)
-			self.selectedDistance = self:LODGetSelected()
-			self:LODLoad(self.selectedDistance)
+			self:LODUpdateSelection()
 			return true
 		end)
 		
@@ -1040,7 +1039,7 @@ function ModelEdit:buildWidget()
 		
 		self.widget:getWindow("LODDeleteButton"):subscribeEvent("Clicked", function(args)
 			local dist = self:LODGetSelected()
-			if tonumber(dist) >= 0 then
+			if dist >= 0 then
 				local listbox = self.widget:getWindow("LODDistances")
 				listbox = CEGUI.toListbox(listbox)
 				listbox:removeItem(self.lod[dist].item)
@@ -1051,7 +1050,7 @@ function ModelEdit:buildWidget()
 		
 		self.widget:getWindow("LODCopyButton"):subscribeEvent("Clicked", function(args)
 			local distance = self:LODGetSelected()
-			if tonumber(distance) >= 0 then
+			if distance >= 0 then
 				self:LODSave(distance)
 				self.clipboard = {}
 				self.clipboard.type = self.lod[distance].type
@@ -1073,9 +1072,7 @@ function ModelEdit:buildWidget()
 		end)
 		
 		self.widget:getWindow("LODDistances"):subscribeEvent("ItemSelectionChanged", function(args)
-			self:LODSave(self.selectedDistance)
-			self.selectedDistance = self:LODGetSelected()
-			self:LODLoad(self.selectedDistance)
+			self:LODUpdateSelection()
 			return true
 		end)
 		
@@ -1150,7 +1147,7 @@ function ModelEdit:fillLODReductionTypeCombobox()
 end
 
 function ModelEdit:LODSave(dist)
-	if dist == nil or tonumber(dist) < 0 or self.lod[dist] == nil then return end
+	if dist == nil or dist < 0 or self.lod[dist] == nil then return end
 	
 	local combobox = self.widget:getWindow("LODTypeCombobox")
 	combobox = CEGUI.toCombobox(combobox)
@@ -1171,7 +1168,7 @@ end
 
 function ModelEdit:LODLoad(dist)
 	local container = self.widget:getWindow("LODConfigContainer")
-	if dist == nil or tonumber(dist) < 0 or self.lod[dist] == nil then
+	if dist == nil or dist < 0 or self.lod[dist] == nil then
 		container:setEnabled(false)
 		return
 	else
@@ -1193,6 +1190,12 @@ function ModelEdit:LODLoad(dist)
 	editbox:setText(self.lod[dist].meshName)
 	
 	self:LODTypes_SelectionChanged()
+end
+
+function ModelEdit:LODUpdateSelection()
+	self:LODSave(self.selectedDistance)
+	self.selectedDistance = self:LODGetSelected()
+	self:LODLoad(self.selectedDistance)
 end
 
 function ModelEdit:LODTypes_SelectionChanged()
@@ -1218,13 +1221,21 @@ function ModelEdit:LODGetSelected()
 	if (item == nil) then
 		return -1
 	else
-		return item:getText()
+		return tonumber(item:getText())
+	end
+end
+
+function ModelEdit:checkInteger(number)
+	if number:find("^(%d+)$") then
+		return tonumber(number)
+	else
+		return nil
 	end
 end
 
 function ModelEdit:LODAdd(distance)
-	distance = tostring(distance)
-	if distance:find("^(%d+)$") and distance:len() < 8 and self.lod[distance] == nil then
+	distance = self:checkInteger(distance)
+	if distance and self.lod[distance] == nil then
 		local listbox = self.widget:getWindow("LODDistances")
 		listbox = CEGUI.toListbox(listbox)
 		self.lod[distance] = {}
@@ -1246,8 +1257,8 @@ function ModelEdit:LODAdd(distance)
 end
 
 function ModelEdit:LODPaste(distance)
-	distance = tostring(distance)
-	if distance:find("^(%d+)$") and distance:len() < 8 and self.lod[distance] == nil then
+	distance = self:checkInteger(distance)
+	if distance and self.lod[distance] == nil then
 		local listbox = self.widget:getWindow("LODDistances")
 		listbox = CEGUI.toListbox(listbox)
 		self.lod[distance] = self.clipboard;
