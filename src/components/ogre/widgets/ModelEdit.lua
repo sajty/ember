@@ -1261,7 +1261,11 @@ function ModelEdit:LODPaste(distance)
 	if distance and self.lod[distance] == nil then
 		local listbox = self.widget:getWindow("LODDistances")
 		listbox = CEGUI.toListbox(listbox)
-		self.lod[distance] = self.clipboard;
+		self.lod[distance] = {}
+		self.lod[distance].type = self.clipboard.type
+		self.lod[distance].meshName = self.clipboard.meshName
+		self.lod[distance].algorithm = self.clipboard.algorithm
+		self.lod[distance].parameter = self.clipboard.parameter
 		self.lod[distance].item = Ember.OgreView.Gui.ColouredListItem:new(distance, distance)
 		local selected = self:LODGetSelected()
 		self:LODSave(selected)
