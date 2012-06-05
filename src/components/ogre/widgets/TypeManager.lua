@@ -19,7 +19,7 @@ function TypeManager:buildWidget()
 		self.codecTypeCombobox:addItem(item)
 		self.codecTypeCombobox:setItemSelectState(0, true)
 		self.codecTypeCombobox:setSingleClickEnabled(true)
-		self.codecTypeCombobox:subscribeEvent("ListSelectionChanged", self.CodecType_ListSelectionChanged, self)
+		self.codecTypeCombobox:subscribeEvent("ListSelectionAccepted", self.CodecType_ListSelectionChanged, self)
 	
 		
 		self.typeInfoText = CEGUI.toMultiLineEditbox(self.widget:getWindow("TypeInfoText"))

@@ -880,7 +880,7 @@ function ModelEdit:buildWidget()
 		item = Ember.OgreView.Gui.ColouredListItem:new("Object center", 1)
 		cameraPosCombobox:addItem(item)
 		cameraPosCombobox:setItemSelectState(0, true)
-		cameraPosCombobox:subscribeEvent("ListSelectionChanged", function(args) 
+		cameraPosCombobox:subscribeEvent("ListSelectionAccepted", function(args) 
 			local item = cameraPosCombobox:getSelectedItem()
 			if item then
 				local selectId = item:getID()
@@ -1113,7 +1113,7 @@ function ModelEdit:fillScaleTypesList()
 	local item = Ember.OgreView.Gui.ColouredListItem:new("height", 4)
 	self.scaleTypes:addItem(item)
 	
-	self.scaleTypes:subscribeEvent("ListSelectionChanged", function(args)
+	self.scaleTypes:subscribeEvent("ListSelectionAccepted", function(args)
 		local model = self.definition
 		local item = self.scaleTypes:getSelectedItem()
 		if item then

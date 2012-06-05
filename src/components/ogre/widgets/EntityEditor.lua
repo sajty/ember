@@ -75,7 +75,7 @@ EntityEditor = {
 					end
 					return true
 				end
-				wrapper.typeCombobox:subscribeEvent("ListSelectionChanged", wrapper.buttonEnableChecker)
+				wrapper.typeCombobox:subscribeEvent("ListSelectionAccepted", wrapper.buttonEnableChecker)
 				
 				wrapper.buttonPressed = function(args)
 					local name = wrapper.nameEditbox:getText()
@@ -177,7 +177,7 @@ EntityEditor = {
 					end
 					return true
 				end
-				wrapper.typeCombobox:subscribeEvent("ListSelectionChanged", wrapper.buttonEnableChecker)
+				wrapper.typeCombobox:subscribeEvent("ListSelectionAccepted", wrapper.buttonEnableChecker)
 				
 				wrapper.buttonEnableChecker(nil)
 			
