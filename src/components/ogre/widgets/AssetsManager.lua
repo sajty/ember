@@ -330,6 +330,172 @@ function AssetsManager:addEntity(entity, level)
 --	end
 end
 
+function AssetsManager:checkInteger(number)
+	if number:find("^(%d+)$") then
+		return tonumber(number)
+	else
+		return nil
+	end
+end
+
+function AssetsManager:getInput(question, answerFunc)
+	if not self.waitingAnswer then
+		self.waitingAnswer = true
+		self.answerFunc = answerFunc
+		
+		self.widget:getWindow("InputQuestion_text"):setText(question)
+		self.widget:getWindow("InputAnswerTextbox"):setText("")
+		self.widget:getWindow("InpuWindow"):setVisible(true)
+		self.widget:getWindow("InpuWindow"):moveToFront()
+	end
+end
+
+function AssetsManager:fillLODTypeCombobox()
+	self.LODTypes = self.widget:getWindow("LODTypeCombobox")
+	self.LODTypes = CEGUI.toCombobox(self.LODTypes)
+	
+	local item = Ember.OgreView.Gui.ColouredListItem:new("Automatic vertex reduction", 0)
+	self.LODTypes:addItem(item)
+	
+	local item = Ember.OgreView.Gui.ColouredListItem:new("Manually created LOD", 1)
+	self.LODTypes:addItem(item)
+end
+
+function AssetsManager:fillLODReductionTypeCombobox()
+	self.LODReductionTypes = self.widget:getWindow("LODReductionTypeCombobox")
+	self.LODReductionTypes = CEGUI.toCombobox(self.LODReductionTypes)
+	
+	local item = Ember.OgreView.Gui.ColouredListItem:new("Proportional", 0)
+	self.LODReductionTypes:addItem(item)
+	
+	local item = Ember.OgreView.Gui.ColouredListItem:new("Constant", 1)
+	self.LODReductionTypes:addItem(item)
+end
+
+function AssetsManager:LODSave(dist)
+	if dist == nil or dist < 0 or self.lod[dist] == nil then return end
+	
+	local combobox = self.widget:getWindow("LODTypeCombobox")
+	combobox = CEGUI.toCombobox(combobox)
+	local item = combobox:getSelectedItem();
+	self.lod[dist].type = combobox:getItemIndex(item)
+	
+	local combobox = self.widget:getWindow("LODReductionTypeCombobox")
+	combobox = CEGUI.toCombobox(combobox)
+	local item = combobox:getSelectedItem();
+	self.lod[dist].algorithm = combobox:getItemIndex(item)
+	
+	local editbox = self.widget:getWindow("LODReductionParameterTextbox")
+	self.lod[dist].parameter = editbox:getText()
+	
+	local editbox = self.widget:getWindow("LODMeshName")
+	self.lod[dist].meshName = editbox:getText()
+end
+
+function AssetsManager:LODLoad(dist)
+	local container = self.widget:getWindow("LODConfigContainer")
+	if dist == nil or dist < 0 or self.lod[dist] == nil then
+		container:setEnabled(false)
+		return
+	else
+		container:setEnabled(true)
+	end
+	
+	local combobox = self.widget:getWindow("LODTypeCombobox")
+	combobox = CEGUI.toCombobox(combobox)
+	combobox:setItemSelectState(self.lod[dist].type, true)
+	
+	local combobox = self.widget:getWindow("LODReductionTypeCombobox")
+	combobox = CEGUI.toCombobox(combobox)
+	combobox:setItemSelectState(self.lod[dist].algorithm, true)
+	
+	local editbox = self.widget:getWindow("LODReductionParameterTextbox")
+	editbox:setText(self.lod[dist].parameter)
+	
+	local editbox = self.widget:getWindow("LODMeshName")
+	editbox:setText(self.lod[dist].meshName)
+	
+	self:LODTypes_SelectionChanged()
+end
+
+function AssetsManager:LODUpdateSelection()
+	self:LODSave(self.selectedDistance)
+	self.selectedDistance = self:LODGetSelected()
+	self:LODLoad(self.selectedDistance)
+end
+
+function AssetsManager:LODTypes_SelectionChanged()
+	local combobox = self.widget:getWindow("LODTypeCombobox")
+	local selected = combobox:getText()
+	local automatic = self.widget:getWindow("AutomaticVertexReductionContainer")
+	local manual = self.widget:getWindow("ManuallyCreatedLODContainer")
+	if ( selected == "Automatic vertex reduction" ) then
+		-- Automatic vertex reduction.
+		automatic:setVisible(true);
+		manual:setVisible(false);
+	else -- if ( selected == "Manually created LOD" ) then
+		-- Manually created LOD.
+		manual:setVisible(true);
+		automatic:setVisible(false);
+	end
+end
+
+function AssetsManager:LODGetSelected()
+	local listbox = self.widget:getWindow("LODDistances")
+	listbox = CEGUI.toListbox(listbox)
+	local item = listbox:getFirstSelectedItem()
+	if (item == nil) then
+		return -1
+	else
+		return tonumber(item:getText())
+	end
+end
+
+function AssetsManager:LODAdd(distance)
+	distance = self:checkInteger(distance)
+	if distance and self.lod[distance] == nil then
+		local listbox = self.widget:getWindow("LODDistances")
+		listbox = CEGUI.toListbox(listbox)
+		self.lod[distance] = {}
+		self.lod[distance].type = 0
+		self.lod[distance].meshName = ""
+		self.lod[distance].algorithm = 0
+		self.lod[distance].parameter = 0.5
+		self.lod[distance].item = Ember.OgreView.Gui.ColouredListItem:new(distance, distance)
+		local selected = self:LODGetSelected()
+		self:LODSave(selected)
+		listbox:addItem(self.lod[distance].item)
+		listbox:clearAllSelections()
+		listbox:setItemSelectState(self.lod[distance].item, true)
+		self:LODLoad(distance)
+	else
+		-- Not an integer number passed or distance already exists.
+	end
+	return true
+end
+
+function AssetsManager:LODPaste(distance)
+	distance = self:checkInteger(distance)
+	if distance and self.lod[distance] == nil then
+		local listbox = self.widget:getWindow("LODDistances")
+		listbox = CEGUI.toListbox(listbox)
+		self.lod[distance] = {}
+		self.lod[distance].type = self.clipboard.type
+		self.lod[distance].meshName = self.clipboard.meshName
+		self.lod[distance].algorithm = self.clipboard.algorithm
+		self.lod[distance].parameter = self.clipboard.parameter
+		self.lod[distance].item = Ember.OgreView.Gui.ColouredListItem:new(distance, distance)
+		local selected = self:LODGetSelected()
+		self:LODSave(selected)
+		listbox:addItem(self.lod[distance].item)
+		listbox:clearAllSelections()
+		listbox:setItemSelectState(self.lod[distance].item, true)
+		self:LODLoad(distance)
+	else
+		-- Not an integer number passed or distance already exists.
+	end
+end
+
 function AssetsManager:buildWidget()
 
 	self.widget = guiManager:createWidget()
@@ -434,7 +600,7 @@ function AssetsManager:buildWidget()
 		self.meshes.controls.materialListbox = CEGUI.toListbox(self.widget:getWindow("SubMeshMaterialsList"))
 		self.meshes.controls.materialFilter = CEGUI.toEditbox(self.widget:getWindow("SubMeshMaterialsFilter"))
 		self.meshes.controls.skeletonPath = CEGUI.toEditbox(self.widget:getWindow("MeshSkeletonPath"))
-		self.meshes.controls.lodlevelsList = CEGUI.toListbox(self.widget:getWindow("MeshLodLevel"))
+		--[[self.meshes.controls.lodlevelsList = CEGUI.toListbox(self.widget:getWindow("MeshLodLevel"))
 		self.meshes.controls.lodlevelsList:subscribeEvent("ItemSelectionChanged", function(args)
 			local entity = self.meshes.renderer:getEntity()
 			if entity then
@@ -446,6 +612,7 @@ function AssetsManager:buildWidget()
 			end
 			return true
 		end)
+		--]]
 		self.meshes.controls.filter = CEGUI.toEditbox(self.widget:getWindow("FilterMeshes"))
 		self.meshes.listholder = Ember.OgreView.Gui.ListHolder:new(self.meshes.controls.listbox, self.meshes.controls.filter)
 		self.meshes.controls.textureView = self.widget:getWindow("MeshInfo/Preview")
@@ -483,7 +650,77 @@ function AssetsManager:buildWidget()
 		self.widget:getWindow("ShadersReload"):subscribeEvent("Clicked", self.ShadersReload_Clicked, self)
 		self.widget:getWindow("ShadersList"):subscribeEvent("ItemSelectionChanged", self.ShadersList_ItemSelectionChanged, self)
 	
-	
+		
+		self.widget:getWindow("InputOkButton"):subscribeEvent("Clicked", function(args)
+			self.widget:getWindow("InpuWindow"):setVisible(false)
+			self.waitingAnswer = false
+			local name = self.widget:getWindow("InputAnswerTextbox"):getText()
+			self:answerFunc(name)
+			return true
+		end)
+		self.widget:getWindow("InputCancelButton"):subscribeEvent("Clicked", function(args)
+			self.widget:getWindow("InpuWindow"):setVisible(false)
+			self.waitingAnswer = false
+			return true
+		end)
+		
+		-- subscribe LOD events.
+		self.widget:getWindow("EnableAutomaticLOD"):subscribeEvent("CheckStateChanged", function(args)
+			local container = self.widget:getWindow("ManualLODContainer")
+			local isDisabled = container:isDisabled()
+			container:setEnabled(isDisabled)
+			self:LODUpdateSelection()
+			return true
+		end)
+		
+		self.widget:getWindow("LODAddButton"):subscribeEvent("Clicked", function(args)
+			self:getInput("Please enter the distance.", self.LODAdd)
+			return true
+		end)
+		
+		self.widget:getWindow("LODDeleteButton"):subscribeEvent("Clicked", function(args)
+			local dist = self:LODGetSelected()
+			if dist >= 0 then
+				local listbox = self.widget:getWindow("LODDistances")
+				listbox = CEGUI.toListbox(listbox)
+				listbox:removeItem(self.lod[dist].item)
+				self.lod[dist] = nil
+			end
+			return true
+		end)
+		
+		self.widget:getWindow("LODCopyButton"):subscribeEvent("Clicked", function(args)
+			local distance = self:LODGetSelected()
+			if distance >= 0 then
+				self:LODSave(distance)
+				self.clipboard = {}
+				self.clipboard.type = self.lod[distance].type
+				self.clipboard.meshName = self.lod[distance].meshName
+				self.clipboard.algorithm = self.lod[distance].algorithm
+				self.clipboard.parameter = self.lod[distance].parameter
+			end
+			return true
+		end)
+		
+		self.widget:getWindow("LODPasteButton"):subscribeEvent("Clicked", function(args)
+			self:getInput("Please enter the distance.", self.LODPaste)
+			return true
+		end)
+		
+		self.widget:getWindow("LODTypeCombobox"):subscribeEvent("ListSelectionAccepted", function(args)
+			self:LODTypes_SelectionChanged()
+			return true
+		end)
+		
+		self.widget:getWindow("LODDistances"):subscribeEvent("ItemSelectionChanged", function(args)
+			self:LODUpdateSelection()
+			return true
+		end)
+		
+		-- Fill LOD Comboboxes.
+		self:fillLODTypeCombobox()
+		self:fillLODReductionTypeCombobox()
+			
 	
 		self.helper = Ember.OgreView.Gui.AssetsManager:new()
 	
@@ -525,6 +762,7 @@ end
 connect(connectors, emberOgre.EventGUIManagerInitialized, function(guiManager)
 	local assetsManager = {connectors={}, 
 		controls = {},
+		lod={},
 		textures = {controls = {}, listbox = nil,selectedTexture = nil}, 
 		materials = {controls = {}, listbox = nil,selectedTexture = nil}, 
 		images = {controls = {}, listbox = nil,selectedTexture = nil}, 
