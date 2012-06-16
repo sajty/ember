@@ -109,6 +109,7 @@ private:
 	LoadingBarSection& mSection;
 	Ogre::Real mProgressBarInc;
 	unsigned short mCompletedSections;
+	Ogre::MeshPtr mCurrentMesh;
 
 };
 

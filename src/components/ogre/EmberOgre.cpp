@@ -72,6 +72,8 @@
 #include "model/ModelRepresentationManager.h"
 #include "mapping/EmberEntityMappingManager.h"
 
+#include "LodManager.h"
+
 //#include "ogreopcode/include/OgreCollisionManager.h"
 //#include "OpcodeCollisionDetectorVisualizer.h"
 
@@ -137,7 +139,7 @@ void assureConfigFile(const std::string& filename, const std::string& originalCo
 EmberOgre::EmberOgre() :
 		mInput(0), mRoot(0), mSceneMgr(0), mWindow(0), mScreen(0), mShaderManager(0), mGeneralCommandMapper(std::auto_ptr < InputCommandMapper > (new InputCommandMapper("general"))), mSoundManager(0), mGUIManager(0), mModelDefinitionManager(0), mEntityMappingManager(0), mTerrainLayerManager(0), mEntityRecipeManager(0),
 		//mJesus(0),
-		mLogObserver(0), mMaterialEditor(0), mModelRepresentationManager(0), mScriptingResourceProvider(0), mSoundResourceProvider(0),
+		mLogObserver(0), mMaterialEditor(0), mModelRepresentationManager(0), mScriptingResourceProvider(0), mSoundResourceProvider(0), mLodManager(0),
 		//mCollisionManager(0),
 		//mCollisionDetectorVisualizer(0),
 		mResourceLoader(0), mOgreLogManager(0), mIsInPausedMode(false), mOgreMainCamera(0), mWorld(0)
@@ -296,8 +298,12 @@ bool EmberOgre::setup(Input& input, MainLoopController& mainLoopController)
 		throw Exception("There was a problem setting up the Ogre environment, aborting.");
 	}
 
+
+	std::string exportDir(configSrv.getHomeDirectory() + "/user-media/data/");
 	//Create the model definition manager
-	mModelDefinitionManager = new Model::ModelDefinitionManager(configSrv.getHomeDirectory() + "/user-media/data/");
+	mModelDefinitionManager = new Model::ModelDefinitionManager(exportDir);
+
+	mLodManager = new LodManager(exportDir);
 
 	mEntityMappingManager = new Mapping::EmberEntityMappingManager();
 

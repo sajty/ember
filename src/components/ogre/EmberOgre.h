@@ -71,6 +71,7 @@ class TerrainLayerDefinitionManager;
 }
 
 class SoundDefinitionManager;
+class LodManager;
 
 namespace Mapping
 {
@@ -273,6 +274,11 @@ protected:
 	 * @brief Resonsible for managing all Model definitions;
 	 */
 	Model::ModelDefinitionManager* mModelDefinitionManager;
+
+	/**
+	 * @brief Manages Lod definition files and loads the Lod information into the mesh.
+	 */
+	LodManager* mLodManager;
 
 	/**
 	 * @brief Handles all model mappings.

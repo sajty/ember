@@ -26,6 +26,7 @@ the basic resources required for the progress bar and will be loaded automatical
 
 #include "LoadingBar.h"
 
+#include "components/ogre/LodManager.h"
 #include "services/EmberServices.h"
 #include "services/wfut/WfutService.h"
 #include "services/input/Input.h"
@@ -347,10 +348,20 @@ namespace Gui {
 	}
 	void ResourceGroupLoadingBarSection::resourceLoadStarted(const ResourcePtr& resource)
 	{
+		std::string type = resource->getCreator()->getResourceType();
+		if (type == "Mesh") {
+			mCurrentMesh = resource;
+		} else if(!mCurrentMesh.isNull()) {
+			mCurrentMesh.setNull();
+		}
+		
 		mSection.setCaption(resource->getName());
 	}
 	void ResourceGroupLoadingBarSection::resourceLoadEnded(void)
 	{
+		if(!mCurrentMesh.isNull()){
+			LodManager::getSingleton().LoadLod(mCurrentMesh);
+		}
 		mSection.tick(mProgressBarInc);
 	}
 /*	void ResourceGroupLoadingBarSection::worldGeometryStageStarted(const String& description)
