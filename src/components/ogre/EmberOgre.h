@@ -72,6 +72,12 @@ class TerrainLayerDefinitionManager;
 
 class SoundDefinitionManager;
 
+namespace Lod
+{
+class LodDefinitionManager;
+class LodManager;
+}
+
 namespace Mapping
 {
 class EmberEntityMappingManager;
@@ -273,6 +279,16 @@ protected:
 	 * @brief Resonsible for managing all Model definitions;
 	 */
 	Model::ModelDefinitionManager* mModelDefinitionManager;
+
+	/**
+	 * @brief Manages Lod definition files and loads the Lod information into the mesh.
+	 */
+	Lod::LodDefinitionManager* mLodDefinitionManager;
+
+	/**
+	 * @brief Allows to add Lod to the meshes.
+	 */
+	Lod::LodManager* mLodManager;
 
 	/**
 	 * @brief Handles all model mappings.
