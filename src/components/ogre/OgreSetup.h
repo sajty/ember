@@ -39,6 +39,10 @@ class EmberPagingSceneManager;
 class EmberPagingSceneManagerFactory;
 class MeshSerializerListener;
 
+namespace Lod
+{
+	class EmberOgreRoot;
+}
 /**
 	@brief A class used for setting up Ogre.
 
@@ -72,12 +76,6 @@ public:
 	Ogre::RenderWindow* getRenderWindow() const;
 
 	/**
-	* @brief Gets the Ogre root object.
-	* @return The root object.
-	*/
-	Ogre::Root* getRoot() const;
-
-	/**
 	 * @brief Chooses and sets up the correct scene manager.
 	 * @return The newly created scene manager.
 	 */
@@ -108,7 +106,7 @@ private:
 	/**
 	 * @brief Holds the Ogre root object.
 	 */
-	Ogre::Root* mRoot;
+	Lod::EmberOgreRoot* mRoot;
 
 	/**
 	 * @brief Holds the main render window.
@@ -162,11 +160,6 @@ private:
 	void Input_AltTab();
 
 };
-
-inline Ogre::Root* OgreSetup::getRoot() const
-{
-	return mRoot;
-}
 
 inline Ogre::RenderWindow* OgreSetup::getRenderWindow() const
 {
