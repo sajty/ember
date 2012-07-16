@@ -68,12 +68,18 @@ $pfile "ModelDefinition.pkg"
 
 $pfile "Convert.pkg"
 
+$pfile "LodDefinition.pkg"
+$pfile "LodDefinitionManager.pkg"
+$pfile "LodManager.pkg"
 
 $pfile "SimpleRenderContext.pkg"
 $pfile "MovableObjectRenderer.pkg"
 $pfile "OgreEntityRenderer.pkg"
 $pfile "ModelRenderer.pkg"
 $pfile "ListHolder.pkg"
+
+$pfile "MeshInfoProvider.pkg"
+
 //$pfile "MaterialPicker.pkg"
 
 $pfile "IWorldPickListener.pkg"
