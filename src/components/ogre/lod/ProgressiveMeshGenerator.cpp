@@ -124,6 +124,7 @@ void ProgressiveMeshGenerator::tuneContainerSize()
 	mTriangleList.reserve(2 * vertexCount);
 
 	mVertexList.reserve(vertexCount);
+	mCollapseCostHeap._getHeapStorage().reserve(vertexCount);
 	mSharedVertexLookup.reserve(sharedVertexLookupSize);
 	mVertexLookup.reserve(vertexLookupSize);
 	mIndexBufferInfoList.resize(submeshCount);
@@ -193,9 +194,6 @@ void ProgressiveMeshGenerator::addVertexData(Ogre::VertexData* vertexData, bool 
 			v = *ret.first; // Point to the existing vertex.
 			v->seam = true;
 		} else {
-#ifndef NDEBUG
-			v->costSetPosition = mCollapseCostSet.end();
-#endif
 			v->seam = false;
 		}
 		lookup.push_back(v);
@@ -429,16 +427,16 @@ ProgressiveMeshGenerator::PMEdge* ProgressiveMeshGenerator::getPointer(VEdges::i
 
 void ProgressiveMeshGenerator::computeCosts()
 {
-	mCollapseCostSet.clear();
+	mCollapseCostHeap.clear();
 	VertexList::iterator it = mVertexList.begin();
 	VertexList::iterator itEnd = mVertexList.end();
 	for (; it != itEnd; it++) {
 		if (!it->edges.empty()) {
 			computeVertexCollapseCost(&*it);
-
+			mCollapseCostHeap._getHeapStorage().push_back(&*it); // We will heapify the items after this loop for speedup
 		} else {
 			std::stringstream str;
-			str << "In " << mMesh.getName() << " never used vertex found with ID: " << mCollapseCostSet.size() << "."
+			str << "In " << mMesh.getName() << " never used vertex found with ID: " << mCollapseCostHeap.size() << "."
 			    << std::endl
 			    << "Vertex position: ("
 			    << it->position.x << ", "
@@ -448,6 +446,9 @@ void ProgressiveMeshGenerator::computeCosts()
 			S_LOG_WARNING(str.str());
 		}
 	}
+
+	//Heapify mCollapseCostHeap in O(n) time.
+	mCollapseCostHeap._heapify();
 }
 
 void ProgressiveMeshGenerator::computeVertexCollapseCost(PMVertex* vertex)
@@ -463,8 +464,6 @@ void ProgressiveMeshGenerator::computeVertexCollapseCost(PMVertex* vertex)
 		}
 	}
 	assert(vertex->collapseCost != UNINITIALIZED_COLLAPSE_COST);
-	vertex->costSetPosition = mCollapseCostSet.insert(vertex);
-
 }
 
 Ogre::Real ProgressiveMeshGenerator::computeEdgeCollapseCost(PMVertex* src, PMEdge* dstEdge)
@@ -633,16 +632,14 @@ void ProgressiveMeshGenerator::updateVertexCollapseCost(PMVertex* vertex)
 	}
 	if (collapseCost != vertex->collapseCost || vertex->collapseTo != collapseTo) {
 		assert(vertex->collapseTo != NULL);
-		assert(vertex->costSetPosition != mCollapseCostSet.end());
-		mCollapseCostSet.erase(vertex->costSetPosition);
+		mCollapseCostHeap.remove(vertex->heapHandle);
 		if (collapseCost != UNINITIALIZED_COLLAPSE_COST) {
 			vertex->collapseCost = collapseCost;
 			vertex->collapseTo = collapseTo;
-			vertex->costSetPosition = mCollapseCostSet.insert(vertex);
+			mCollapseCostHeap.push(vertex);
 		} else {
 #ifndef NDEBUG
 			vertex->collapseTo == NULL;
-			vertex->costSetPosition = mCollapseCostSet.end();
 #endif
 		}
 	}
@@ -675,9 +672,10 @@ void ProgressiveMeshGenerator::computeLods(LodConfigList& lodConfigs)
 	for (mCurLod = 0; mCurLod < lodCount; mCurLod++) {
 		size_t neededVertexCount = calcLodVertexCount(lodConfigs[mCurLod]);
 		for (; neededVertexCount < vertexCount; vertexCount--) {
-			CollapseCostSet::iterator nextIndex = mCollapseCostSet.begin();
-			if (nextIndex != mCollapseCostSet.end() && (*nextIndex)->collapseCost != NEVER_COLLAPSE_COST) {
-				collapse(*nextIndex);
+			PMVertex* nextVertex = mCollapseCostHeap.top();
+			//TODO: Handle empty heap.
+			if (nextVertex->collapseCost != NEVER_COLLAPSE_COST) {
+				collapse(nextVertex);
 			} else {
 				break;
 			}
@@ -728,9 +726,9 @@ void ProgressiveMeshGenerator::assertValidMesh()
 	// Allows to find bugs in collapsing.
 #ifndef NDEBUG
 	size_t s1 = mUniqueVertexSet.size();
-	size_t s2 = mCollapseCostSet.size();
-	CollapseCostSet::iterator it = mCollapseCostSet.begin();
-	CollapseCostSet::iterator itEnd = mCollapseCostSet.end();
+	size_t s2 = mCollapseCostHeap.size();
+	CollapseCostHeap::HeapStorage::iterator it = mCollapseCostHeap._getHeapStorage().begin();
+	CollapseCostHeap::HeapStorage::iterator itEnd = mCollapseCostHeap._getHeapStorage().end();
 	while (it != itEnd) {
 		assertValidVertex(*it);
 		it++;
@@ -746,7 +744,6 @@ void ProgressiveMeshGenerator::assertValidVertex(PMVertex* v)
 	for (; it != itEnd; it++) {
 		PMTriangle* t = *it;
 		for (int i = 0; i < 3; i++) {
-			assert(t->vertex[i]->costSetPosition != mCollapseCostSet.end());
 			t->vertex[i]->edges.findExists(PMEdge(t->vertex[i]->collapseTo));
 			for (int n = 0; n < 3; n++) {
 				if (i != n) {
@@ -887,12 +884,9 @@ void ProgressiveMeshGenerator::collapse(PMVertex* src)
 	assertOutdatedCollapseCost(dst);
 #endif // ifndef NDEBUG
 #endif // ifndef PM_BEST_QUALITY
-	mCollapseCostSet.erase(src->costSetPosition); // Remove src from collapse costs.
+	mCollapseCostHeap.remove(src->heapHandle); // Remove src from collapse costs.
 	src->edges.clear(); // Free memory
 	src->triangles.clear(); // Free memory
-#ifndef NDEBUG
-	src->costSetPosition = mCollapseCostSet.end();
-#endif
 	assertValidVertex(dst);
 }
 size_t ProgressiveMeshGenerator::calcLodVertexCount(const LodConfig& lodConfig)
@@ -1021,11 +1015,6 @@ bool ProgressiveMeshGenerator::PMVertexEqual::operator() (const PMVertex* lhs, c
 	return lhs->position == rhs->position;
 }
 
-bool ProgressiveMeshGenerator::PMCollapseCostLess::operator() (const PMVertex* lhs, const PMVertex* rhs) const
-{
-	return lhs->collapseCost < rhs->collapseCost;
-}
-
 size_t ProgressiveMeshGenerator::PMVertexHash::operator() (const PMVertex* v) const
 {
 	boost::hash<Ogre::Real> hasher;
@@ -1108,6 +1097,222 @@ template<typename T, unsigned S>
 	iterator it = find(item);
 	assert(it != end());
 	return it;
+}
+
+bool ProgressiveMeshGenerator::PMVertex::compareHeapItem( PMVertex* other )
+{
+	return collapseCost < other->collapseCost;
+}
+
+void ProgressiveMeshGenerator::PMVertex::updateHeapHandle( CollapseCostHeap::HeapHandle handle )
+{
+	heapHandle = handle;
+}
+
+
+template<typename T, typename Vec>
+bool ProgressiveMeshGenerator::BinaryHeap<T, Vec>::isEmpty()
+{
+	return mHeap.empty();
+}
+
+
+template<typename T, typename Vec>
+void ProgressiveMeshGenerator::BinaryHeap<T, Vec>::clear()
+{
+	mHeap.clear();
+}
+
+
+template<typename T, typename Vec>
+size_t ProgressiveMeshGenerator::BinaryHeap<T, Vec>::size()
+{
+	return mHeap.size();
+}
+
+template<typename T, typename Vec>
+bool ProgressiveMeshGenerator::BinaryHeap<T, Vec>::hasItem( ItemPtr item, HeapHandle handle )
+{
+	return handle < size() && mHeap[handle] == item;
+}
+
+
+template<typename T, typename Vec>
+/*HeapHandle*/ size_t ProgressiveMeshGenerator::BinaryHeap<T, Vec>::findItemHandle( ItemPtr item )
+{
+
+	HeapStorage::iterator it = std::find(mHeap.begin(), mHeap.end(), item);
+	assert(it != mHeap.end());
+	return ((&*it)-&mHeap.front())/sizeof(ItemPtr);
+}
+
+
+template<typename T, typename Vec>
+/*ItemPtr*/ T* ProgressiveMeshGenerator::BinaryHeap<T, Vec>::top()
+{
+	assert(!isEmpty());
+	return mHeap.front();
+}
+
+
+template<typename T, typename Vec>
+void ProgressiveMeshGenerator::BinaryHeap<T, Vec>::pop()
+{
+#ifndef NDEBUG
+	assert(!isEmpty());
+	mHeap.front()->updateHeapHandle((HeapHandle) -1);
+#endif
+	ItemPtr item = mHeap.back();
+	mHeap.pop_back();
+	HeapHandle handle = updateDownwards(0, item);
+	setHandle(item, handle);
+}
+
+
+template<typename T, typename Vec>
+void ProgressiveMeshGenerator::BinaryHeap<T, Vec>::remove( HeapHandle handle )
+{
+#ifndef NDEBUG
+	assert(handle != (HeapHandle) -1);
+	mHeap[handle]->updateHeapHandle((HeapHandle) -1);
+#endif
+	if(handle != size() - 1){
+		mHeap[handle] = mHeap.back();
+		mHeap.pop_back();
+		update(handle);
+	} else {
+		mHeap.pop_back();
+	}
+}
+
+
+template<typename T, typename Vec>
+void ProgressiveMeshGenerator::BinaryHeap<T, Vec>::push( ItemPtr item )
+{
+	mHeap.push_back(item);
+	HeapHandle handle = updateUpwards(mHeap.size()-1, item);
+	setHandle(item, handle);
+}
+
+
+template<typename T, typename Vec>
+void ProgressiveMeshGenerator::BinaryHeap<T, Vec>::update( HeapHandle handle )
+{
+	assert(handle != (HeapHandle) -1 && handle < mHeap.size());
+	ItemPtr item = mHeap[handle];
+	HeapHandle newhandle = updateDownwards(handle, item);
+	if(newhandle == handle){ // we couldn't move downwards, try upwards.
+		newhandle = updateUpwards(handle, item);
+	}
+	setHandle(item, newhandle);
+}
+
+
+template<typename T, typename Vec>
+/*HeapStorage&*/ Vec& ProgressiveMeshGenerator::BinaryHeap<T, Vec>::_getHeapStorage()
+{
+	return mHeap;
+}
+
+
+template<typename T, typename Vec>
+void ProgressiveMeshGenerator::BinaryHeap<T, Vec>::_heapify()
+{
+	struct compareHeap{
+		bool operator()(ItemPtr lhs, ItemPtr rhs) const
+		{
+			return lhs->compareHeapItem(rhs);
+		}
+	};
+	std::make_heap(mHeap.begin(), mHeap.end(), compareHeap());
+	HeapHandle size = mHeap.size();
+	for(int i=0; i<size;i++){
+		mHeap[i]->updateHeapHandle(i);
+	}
+}
+
+
+template<typename T, typename Vec>
+/*HeapHandle*/ size_t ProgressiveMeshGenerator::BinaryHeap<T, Vec>::updateUpwards( HeapHandle handle, ItemPtr item )
+{
+	if(handle != 0){
+		HeapHandle parent = getParent(handle);
+		ItemPtr parentItem = mHeap[parent];
+		while(item->compareHeapItem(parentItem)){
+			setHandle(parentItem, handle);
+			if(parent != 0){
+				handle = parent;
+				parent = getParent(parent);
+				parentItem = mHeap[parent];
+			} else {
+				return 0; // We are the root node.
+			}
+		}
+		return handle;
+	} else {
+		return 0; // We are the root node.
+	}
+}
+
+
+template<typename T, typename Vec>
+/*HeapHandle*/ size_t ProgressiveMeshGenerator::BinaryHeap<T, Vec>::updateDownwards( HeapHandle handle, ItemPtr item )
+{
+	HeapHandle heapSize = mHeap.size();
+	HeapHandle child = getChilds(handle);
+	while(1){
+		if(child<heapSize){ // It has got 2 childs.
+			if(mHeap[child - 1]->compareHeapItem(mHeap[child])){
+				child--;
+			}
+			ItemPtr childItem = mHeap[child];
+			if(childItem->compareHeapItem(item)){
+				setHandle(childItem, handle);
+				handle = child;
+				child = getChilds(handle);
+			} else {
+				break; // Child is bigger.
+			}
+		}else if(child-heapSize != 0){
+			// It hasn't got any childs.
+			break;
+		} else {
+			// It has got 1 child.
+			child--;
+			ItemPtr childItem = mHeap[child];
+			if(childItem->compareHeapItem(item)){
+				setHandle(childItem, handle);
+				handle = child;
+				child = getChilds(handle);
+			} else {
+				break; // Child is bigger.
+			}
+		}
+	}
+	return handle;
+}
+
+
+template<typename T, typename Vec>
+void ProgressiveMeshGenerator::BinaryHeap<T, Vec>::setHandle( ItemPtr item, HeapHandle handle )
+{
+	mHeap[handle] = item;
+	item->updateHeapHandle(handle);
+}
+
+
+template<typename T, typename Vec>
+/*HeapHandle*/ size_t ProgressiveMeshGenerator::BinaryHeap<T, Vec>::getParent( HeapHandle handle )
+{
+	return (handle - 1) / 2;
+}
+
+
+template<typename T, typename Vec>
+/*HeapHandle*/ size_t ProgressiveMeshGenerator::BinaryHeap<T, Vec>::getChilds( HeapHandle handle )
+{
+	// To reach the other child, use handle - 1
+	return (handle + 1) * 2;
 }
 
 }

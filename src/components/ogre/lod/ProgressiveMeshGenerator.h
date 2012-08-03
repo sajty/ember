@@ -147,19 +147,60 @@ private:
 		iterator findExists(const T& item); // Complexity: O(N)
 	};
 
+	// This is a specialized heap container.
+	// Specialities:
+	// -autoupdating handle inside the items.
+	// -allow to remove item based on handle.
+	// -allow to update position in heap if value changes.
+	template<typename T, typename Vec = std::vector<T*> >
+	class BinaryHeap
+	{
+	public:
+
+		typedef size_t HeapHandle;
+		typedef T* ItemPtr;
+		typedef Vec HeapStorage;
+
+		ItemPtr top(); // Complexity: O(1)
+		bool isEmpty(); // Complexity: O(1)
+		void clear(); // Complexity: O(1)
+		size_t size(); // Complexity: O(1)
+		bool hasItem(ItemPtr item, HeapHandle handle); // Complexity: O(1)
+		HeapHandle findItemHandle(ItemPtr item); // Complexity: O(N)
+
+		void pop(); // Complexity: O(log N)
+		void push(ItemPtr item); // Complexity: O(log N)
+		void remove(HeapHandle handle); // Complexity: O(log N)
+		void update(HeapHandle handle); // Complexity: O(log N)
+
+		// You can use this to push lot of elements unsorted to the vector,
+		// then you need to call _heapify to generate the heap in O(n) time.
+		HeapStorage& _getHeapStorage(); // Complexity: O(1)
+
+		// Generate the heap in O(n) time from unsorted elements.
+		void _heapify(); // Complexity: O(N)
+	private:
+		HeapHandle updateUpwards(HeapHandle handle, ItemPtr item);
+		HeapHandle updateDownwards(HeapHandle handle, ItemPtr item);
+		void setHandle(ItemPtr item, HeapHandle handle);
+		HeapHandle getParent(HeapHandle handle);
+		HeapHandle getChilds(HeapHandle handle);
+
+		HeapStorage mHeap;
+	};
+
 	struct PMEdge;
 	struct PMVertex;
 	struct PMTriangle;
 	struct PMVertexHash;
 	struct PMVertexEqual;
-	struct PMCollapseCostLess;
 	struct PMCollapsedEdge;
 	struct PMIndexBufferInfo;
 
 	typedef std::vector<PMVertex> VertexList;
 	typedef std::vector<PMTriangle> TriangleList;
 	typedef boost::unordered_set<PMVertex*, PMVertexHash, PMVertexEqual> UniqueVertexSet;
-	typedef std::multiset<PMVertex*, PMCollapseCostLess> CollapseCostSet;
+	typedef BinaryHeap<PMVertex> CollapseCostHeap;
 	typedef std::vector<PMVertex*> VertexLookupList;
 
 	typedef VectorSet<PMEdge, 8> VEdges;
@@ -175,11 +216,6 @@ private:
 
 	// Equality function for UniqueVertexSet.
 	struct PMVertexEqual {
-		bool operator() (const PMVertex* lhs, const PMVertex* rhs) const;
-	};
-
-	// Comparator for CollapseCostSet.
-	struct PMCollapseCostLess {
 		bool operator() (const PMVertex* lhs, const PMVertex* rhs) const;
 	};
 
@@ -199,13 +235,15 @@ private:
 	struct PMVertex {
 		Ogre::Vector3 position;
 		Ogre::Real collapseCost;
-
+		PMVertex* collapseTo;
+		bool seam;
+		CollapseCostHeap::HeapHandle heapHandle;
+		
 		VEdges edges;
 		VTriangles triangles; // Triangle ID set, which are using this vertex.
 
-		PMVertex* collapseTo;
-		bool seam;
-		CollapseCostSet::iterator costSetPosition; // Iterator pointing to the position in the mCollapseCostSet, which allows fast remove.
+		bool compareHeapItem(PMVertex* other); // Called from mCollapseCostHeap.
+		void updateHeapHandle(CollapseCostHeap::HeapHandle handle); // Called from mCollapseCostHeap.
 	};
 
 	struct PMTriangle {
@@ -237,7 +275,7 @@ private:
 	VertexList mVertexList;
 	TriangleList mTriangleList;
 	UniqueVertexSet mUniqueVertexSet;
-	CollapseCostSet mCollapseCostSet;
+	CollapseCostHeap mCollapseCostHeap;
 	CollapsedEdges tmpCollapsedEdges; // Tmp container used in collapse().
 	IndexBufferInfoList mIndexBufferInfoList;
 
