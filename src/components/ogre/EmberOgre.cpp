@@ -75,6 +75,7 @@
 
 #include "lod/LodDefinitionManager.h"
 #include "lod/LodManager.h"
+#include "lod/PMBench.h"
 
 //#include "ogreopcode/include/OgreCollisionManager.h"
 //#include "OpcodeCollisionDetectorVisualizer.h"
@@ -311,6 +312,7 @@ bool EmberOgre::setup(Input& input, MainLoopController& mainLoopController)
 	mLodDefinitionManager = new Lod::LodDefinitionManager(exportDir);
 	mLodManager = new Lod::LodManager();
 
+
 	mEntityMappingManager = new Mapping::EmberEntityMappingManager();
 
 	mTerrainLayerManager = new Terrain::TerrainLayerDefinitionManager();
@@ -440,6 +442,9 @@ bool EmberOgre::setup(Input& input, MainLoopController& mainLoopController)
 		mPMWorker = new Lod::PMWorker();
 		mPMInjector = new Lod::PMInjector();
 
+		std::string benchdir(configSrv.getHomeDirectory() + "/pmbench");
+		Lod::PMBench bench(benchdir);
+		bench.run();
 		loadingBar.finish();
 	}
 	mResourceLoader->unloadUnusedResources();
