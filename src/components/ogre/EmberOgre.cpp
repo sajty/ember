@@ -28,6 +28,7 @@
 
 #include "EmberOgre.h"
 #include "lod/QueuedProgressiveMeshGenerator.h"
+#include "lod/PMInjectorSignaler.h"
 
 // Headers to stop compile problems from headers
 #include <stdlib.h>
@@ -199,6 +200,11 @@ EmberOgre::~EmberOgre()
 		EventOgreDestroyed();
 	}
 
+	// I don't know how to flush the Ogre::WorkQueue safely so we need to delete these
+	// after the destructor of Ogre::Root to make sure the queue is flushed and we can delete it safely.
+	delete mPMWorker;
+	delete mPMInjector;
+
 	//Ogre is destroyed already, so we can't deregister this: we'll just destroy it
 	delete mLogObserver;
 	OGRE_DELETE mOgreLogManager;
@@ -362,6 +368,10 @@ bool EmberOgre::setup(Input& input, MainLoopController& mainLoopController)
 		//we need a nice loading bar to show the user how far the setup has progressed
 		Gui::LoadingBar loadingBar(*mWindow, mainLoopController);
 
+		// Needed for QueuedProgressiveMeshGenerator.
+		mPMWorker = new Lod::PMWorker();
+		mPMInjector = new Lod::PMInjectorSignaler();
+
 		Gui::LoadingBarSection wfutSection(loadingBar, 0.2, "Media update");
 		if (useWfut) {
 			loadingBar.addSection(&wfutSection);
@@ -435,10 +445,6 @@ bool EmberOgre::setup(Input& input, MainLoopController& mainLoopController)
 		mMaterialEditor = new Authoring::MaterialEditor();
 
 		mModelRepresentationManager = new Model::ModelRepresentationManager();
-
-		// Needed for QueuedProgressiveMeshGenerator.
-		mPMWorker = new Lod::PMWorker();
-		mPMInjector = new Lod::PMInjector();
 
 		loadingBar.finish();
 	}
