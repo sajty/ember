@@ -37,6 +37,10 @@
 #include "framework/LoggingInstance.h"
 #include "framework/MainLoopController.h"
 
+#ifdef _WIN32
+#include "platform/platform_windows.h"
+#endif
+
 #include <boost/thread/thread.hpp>
 
 #ifndef WITHOUT_SCRAP
