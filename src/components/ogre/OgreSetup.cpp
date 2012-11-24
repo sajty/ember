@@ -104,13 +104,6 @@ void OgreSetup::shutdown()
 			delete mSceneManagerFactory;
 			mSceneManagerFactory = 0;
 		}
-
-		//This should normally not be needed, but there seems to be a bug in Ogre for Windows where it will hang if the render window isn't first detached.
-		//The bug appears in Ogre 1.7.2.
-		if (mRenderWindow) {
-			mRoot->detachRenderTarget(mRenderWindow);
-			mRenderWindow = 0;
-		}
 	}
 	delete mRoot;
 	mRoot = 0;
