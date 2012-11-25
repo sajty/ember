@@ -107,7 +107,7 @@ bool Shader::compileMaterial(Ogre::MaterialPtr material)
 
 	//Now also add a "Low" technique, for use in the compass etc.
 	technique = material->createTechnique();
-	technique->setSchemeName("Low");
+	technique->setSchemeName("Medium");
 
 	for (PassStore::iterator I = mPasses.begin(); I != mPasses.end(); ++I) {
 		ShaderPass* shaderPass(*I);
