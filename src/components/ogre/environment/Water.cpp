@@ -25,9 +25,11 @@
 #endif
 
 #include "Water.h"
+#include "WaterCollisionDetector.h"
 #include "services/EmberServices.h"
 #include "services/config/ConfigService.h"
 #include "components/ogre/EmberOgre.h"
+#include "components/ogre/MousePicker.h"
 #include <OgreSceneManager.h>
 #include <OgreColourValue.h>
 #include <OgreRenderTargetListener.h>
@@ -50,7 +52,6 @@ namespace Environment {
 class RefractionTextureListener : public RenderTargetListener
 {
 Entity* pPlaneEnt;
-std::vector<Entity*> aboveWaterEnts;
 
 public:
 
@@ -65,24 +66,11 @@ public:
     {
         // Hide plane and objects above the water
         pPlaneEnt->setVisible(false);
-        std::vector<Entity*>::iterator i, iend;
-        iend = aboveWaterEnts.end();
-        for (i = aboveWaterEnts.begin(); i != iend; ++i)
-        {
-            (*i)->setVisible(false);
-        }
 
     }
     void postRenderTargetUpdate(const RenderTargetEvent& evt)
     {
-        // Show plane and objects above the water
         pPlaneEnt->setVisible(true);
-        std::vector<Entity*>::iterator i, iend;
-        iend = aboveWaterEnts.end();
-        for (i = aboveWaterEnts.begin(); i != iend; ++i)
-        {
-            (*i)->setVisible(true);
-        }
     }
 
 };
@@ -90,7 +78,6 @@ class ReflectionTextureListener : public RenderTargetListener
 {
 Plane reflectionPlane;
 Entity* pPlaneEnt;
-std::vector<Entity*> belowWaterEnts;
 Ogre::Camera* theCam;
 
 public:
@@ -114,12 +101,6 @@ public:
     {
         // Hide plane and objects below the water
         pPlaneEnt->setVisible(false);
-        std::vector<Entity*>::iterator i, iend;
-        iend = belowWaterEnts.end();
-        for (i = belowWaterEnts.begin(); i != iend; ++i)
-        {
-            (*i)->setVisible(false);
-        }
         theCam->enableReflection(reflectionPlane);
 
     }
@@ -127,12 +108,6 @@ public:
     {
         // Show plane and objects below the water
         pPlaneEnt->setVisible(true);
-        std::vector<Entity*>::iterator i, iend;
-        iend = belowWaterEnts.end();
-        for (i = belowWaterEnts.begin(); i != iend; ++i)
-        {
-            (*i)->setVisible(true);
-        }
         theCam->disableReflection();
     }
 
@@ -140,7 +115,9 @@ public:
 
 
 
-Water::Water(Ogre::Camera &camera, Ogre::SceneManager& sceneMgr) : mCamera(camera), mSceneMgr(sceneMgr), mRefractionListener(0), mReflectionListener(0), mWaterNode(0), mWaterEntity(0)
+Water::Water(Ogre::Camera &camera, Ogre::SceneManager& sceneMgr, Ogre::RenderTarget& mainRenderTarget) :
+	mCamera(&camera), mSceneMgr(sceneMgr), mRefractionListener(0), mReflectionListener(0), mWaterNode(0), mWaterEntity(0), mMainRenderTarget(mainRenderTarget),
+	mWaterMaterial("Water/FresnelReflectionRefraction")
 {
 }
 
@@ -154,15 +131,19 @@ bool Water::isSupported() const
 	}
 	else
 	{
-		if (!GpuProgramManager::getSingleton().isSyntaxSupported("arbfp1") &&
-			!GpuProgramManager::getSingleton().isSyntaxSupported("ps_2_0") &&
-			!GpuProgramManager::getSingleton().isSyntaxSupported("ps_1_4")
-			)
+		 if (!GpuProgramManager::getSingleton().isSyntaxSupported("arbfp1") &&
+            !GpuProgramManager::getSingleton().isSyntaxSupported("ps_4_0") &&
+            !GpuProgramManager::getSingleton().isSyntaxSupported("ps_2_0") &&
+			!GpuProgramManager::getSingleton().isSyntaxSupported("ps_1_4"))
 		{
 			return false;
 		}
 	}
-
+	Ogre::MaterialPtr mat = MaterialManager::getSingleton().getByName(mWaterMaterial);
+	if(mat.isNull()) {
+		S_LOG_FAILURE("Unable to get " << mWaterMaterial << " material.");
+		return false;
+	}
 	return true;
 }
 
@@ -176,80 +157,69 @@ bool Water::initialize()
 	try {
 		Ogre::Plane waterPlane(Ogre::Vector3::UNIT_Y, 0);
 
+		Ogre::Real farClipDistance = mCamera->getFarClipDistance();
+		float textureSize = 10.0f;
+		float planeSize = (farClipDistance + textureSize) * 2;
 
 		// create a water plane/scene node
-/*		waterPlane.normal = ;
-		waterPlane.d = 0; */
-		Ogre::MeshManager::getSingleton().createPlane(
-			"WaterPlane",
-			"environment",
-			waterPlane,
-			10000, 10000,
-			5, 5,
-			true, 1,
-			1000, 1000,
-			Ogre::Vector3::UNIT_Z
-		);
-
-		mWaterNode = mSceneMgr.getRootSceneNode()->createChildSceneNode("water");
+		Ogre::MeshManager::getSingleton().createPlane("SimpleWaterPlane", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, waterPlane, planeSize, planeSize, 5, 5, true, 1, planeSize / textureSize, planeSize / textureSize, Ogre::Vector3::UNIT_Z);
 
 		mRefractionListener = new RefractionTextureListener();
 		mReflectionListener = new ReflectionTextureListener();
 
-		Ogre::TexturePtr texture = TextureManager::getSingleton().createManual("Refraction", "General", TEX_TYPE_2D, 512, 512, 0, PF_A8R8G8B8, TU_RENDERTARGET);
-		RenderTexture* rttTex = texture->getBuffer()->getRenderTarget();
-/*		RenderTexture* rttTex = EmberOgre::getSingleton().getOgreRoot()->getRenderSystem()->createRenderTexture( "Refraction", 512, 512 );*/
+		Ogre::MaterialPtr mat = MaterialManager::getSingleton().getByName(mWaterMaterial);
+		assert(!mat.isNull());
 
+		Ogre::Real aspectRation = mCamera->getAspectRatio();
+		Ogre::TexturePtr texture = TextureManager::getSingleton().createManual("Refraction", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, TEX_TYPE_2D, 512, 512, 0, PF_A8R8G8B8, TU_RENDERTARGET);
+		mRefractionTexture = texture->getBuffer()->getRenderTarget();
 		{
-			Viewport *v = rttTex->addViewport( &mCamera );
-			Ogre::MaterialPtr mat = MaterialManager::getSingleton().getByName("Examples/FresnelReflectionRefraction");
-			if (!mat.isNull()) {
-				mat->getTechnique(0)->getPass(0)->getTextureUnitState(2)->setTextureName("Refraction");
-				v->setOverlaysEnabled(false);
-				rttTex->addListener(mRefractionListener);
-			}
+			Viewport *v = mRefractionTexture->addViewport( mCamera );
+			mat->getTechnique(0)->getPass(0)->getTextureUnitState(2)->setTexture(texture);
+			v->setOverlaysEnabled(false);
+			mRefractionTexture->addListener(mRefractionListener);
 		}
-
-
-		texture = TextureManager::getSingleton().createManual("Reflection", "General", TEX_TYPE_2D, 512, 512, 0, PF_A8R8G8B8, TU_RENDERTARGET);
-		rttTex = texture->getBuffer()->getRenderTarget();
+		
+		texture = TextureManager::getSingleton().createManual("Reflection", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, TEX_TYPE_2D, 512, 512, 0, PF_A8R8G8B8, TU_RENDERTARGET);
+		mReflectionTexture = texture->getBuffer()->getRenderTarget();
 		{
-			Viewport *v = rttTex->addViewport( &mCamera );
-			Ogre::MaterialPtr mat = MaterialManager::getSingleton().getByName("Examples/FresnelReflectionRefraction");
-			if (!mat.isNull()) {
-				mat->getTechnique(0)->getPass(0)->getTextureUnitState(1)->setTextureName("Reflection");
-				v->setOverlaysEnabled(false);
-				rttTex->addListener(mReflectionListener);
-			}
+			Viewport *v = mReflectionTexture->addViewport( mCamera );
+			mat->getTechnique(0)->getPass(0)->getTextureUnitState(1)->setTexture(texture);
+			v->setOverlaysEnabled(false);
+			mReflectionTexture->addListener(mReflectionListener);
 		}
+		mCamera->setAspectRatio(aspectRation);
 
-			// Define a floor plane mesh
-/*			reflectionPlane.normal = Vector3::UNIT_Y;
-			reflectionPlane.d = 0;*/
-/*			MeshManager::getSingleton().createPlane("ReflectPlane",reflectionPlane,
-				1500,1500,10,10,true,1,5,5,Vector3::UNIT_Z);*/
+		mWaterNode = mSceneMgr.getRootSceneNode()->createChildSceneNode("water");
 
+		mWaterEntity = mSceneMgr.createEntity("water", "SimpleWaterPlane");
+		mWaterEntity->setMaterial(mat);
+		//Render the water very late on, so that any transparent entity which is half submerged is already rendered.
+		mWaterEntity->setRenderQueueGroup(Ogre::RENDER_QUEUE_8);
+		mWaterEntity->setCastShadows(false);
+		mWaterEntity->setQueryFlags(MousePicker::CM_NATURE);
 
-		mWaterEntity = mSceneMgr.createEntity( "plane", "WaterPlane" );
-		mWaterEntity->setMaterialName("Examples/FresnelReflectionRefraction");
+		mWaterNode->attachObject(mWaterEntity);
+		
 		mRefractionListener->setPlaneEntity(mWaterEntity);
 		mReflectionListener->setPlaneEntity(mWaterEntity);
 		mReflectionListener->setReflectionPlane(mReflectionPlane);
-		mReflectionListener->setCamera(&mCamera);
-		mWaterNode->attachObject(mWaterEntity);
+		mReflectionListener->setCamera(mCamera);
 		return true;
-	} catch (const std::exception& ex)
-	{
-		S_LOG_FAILURE("Error when creating water." << ex);
+	} catch (const std::exception& ex) {
+		S_LOG_FAILURE("Error when creating simple water." << ex);
 		return false;
 	}
-
 }
 
 
 
 Water::~Water()
 {
+	mRefractionTexture->removeAllViewports();
+	mRefractionTexture->removeAllListeners();
+	mReflectionTexture->removeAllViewports();
+	mReflectionTexture->removeAllListeners();
 	delete mRefractionListener;
 	delete mReflectionListener;
 	if (mWaterNode) {
@@ -260,7 +230,36 @@ Water::~Water()
 		mSceneMgr.destroyEntity(mWaterEntity);
 	}
 }
+ICollisionDetector* Water::createCollisionDetector()
+{
+	return new WaterCollisionDetector(*this);
+}
 
+bool Water::setUserAny(const Ogre::Any &anything)
+{
+	if (mWaterEntity) {
+		mWaterEntity->setUserAny(anything);
+		return true;
+	}
+	return false;
+}
+
+void Water::setLevel(float height)
+{
+	if (mWaterNode) {
+		Ogre::Vector3 position = mWaterNode->getPosition();
+		position.y = height;
+		mWaterNode->setPosition(position);
+	}
+}
+
+float Water::getLevel() const
+{
+	if (mWaterNode) {
+		return mWaterNode->getPosition().y;
+	}
+	return 0;
+}
 
 }
 

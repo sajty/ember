@@ -27,6 +27,8 @@
 #include "IEnvironmentProvider.h"
 #include <OgrePlane.h>
 
+#include <string>
+
 namespace Ember {
 namespace OgreView {
 
@@ -41,10 +43,8 @@ class ReflectionTextureListener;
 */
 class Water : public IWater
 {
-
-
 public:
-    Water(Ogre::Camera& camera, Ogre::SceneManager& sceneMgr);
+    Water(Ogre::Camera& camera, Ogre::SceneManager& sceneMgr, Ogre::RenderTarget& mainRenderTarget);
 
     virtual ~Water();
 
@@ -60,15 +60,31 @@ public:
 	 */
 	virtual bool initialize();
 
+	/**
+	 * @brief Sets the level of the water.
+	 * @param height The height of the water level, in world units.
+	 */
+	virtual void setLevel(float height);
+
+	virtual ICollisionDetector* createCollisionDetector();
+
+	virtual bool setUserAny(const Ogre::Any &anything);
+
+	float getLevel() const;
 
 protected:
+
+	const std::string mWaterMaterial;
+
+	Ogre::RenderTexture* mRefractionTexture;
+	Ogre::RenderTexture* mReflectionTexture;
 
 	Ogre::Plane mReflectionPlane;
 
 	/**
 	 * @brief The camera used.
 	 */
-	Ogre::Camera& mCamera;
+	Ogre::Camera* mCamera;
 
 	/**
 	 * @brief The scene manager to which the water will be added.
@@ -87,6 +103,11 @@ protected:
 	 * @brief The entity representing the water plane. Owned by this instance-
 	 */
 	Ogre::Entity* mWaterEntity;
+
+	/**
+	 * @brief The main render target of the scene.
+	 */
+	Ogre::RenderTarget& mMainRenderTarget;
 
 };
 
