@@ -113,7 +113,7 @@ protected:
 	
 	IPageDataProvider* mProvider;
 	
-	virtual const Ogre::Pass* deriveShadowCasterPass(const Ogre::Pass* pass);
+	//virtual const Ogre::Pass* deriveShadowCasterPass(const Ogre::Pass* pass);
 
 private:
 };
