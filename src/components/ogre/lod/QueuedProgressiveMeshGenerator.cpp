@@ -203,7 +203,7 @@ void PMWorker::bakeLods(const LodLevel& lodConfigs)
 	for (unsigned short i = 0; i < submeshCount; i++) {
 		std::vector<PMGenRequest::IndexBuffer>& lods = mRequest->submesh[i].genIndexBuffers;
 		int indexCount = mIndexBufferInfoList[i].indexCount;
-		assert(indexCount >= 0);
+		assert(indexCount > 0);
 
 		lods.push_back(PMGenRequest::IndexBuffer());
 		lods.back().indexCount = indexCount;
@@ -287,20 +287,18 @@ void PMInjector::inject(PMGenRequest* request)
 		for (; it != itEnd; it++) {
 			PMGenRequest::IndexBuffer& buff = *it;
 			int indexCount = buff.indexCount;
-			assert(indexCount >= 0);
+			assert(indexCount != 0);
 			lods.push_back(OGRE_NEW Ogre::IndexData());
 			lods.back()->indexStart = 0;
 			lods.back()->indexCount = indexCount;
-			if(indexCount != 0) {
-				lods.back()->indexBuffer = Ogre::HardwareBufferManager::getSingleton().createIndexBuffer(
-					buff.indexSize == 2 ?
-					Ogre::HardwareIndexBuffer::IT_16BIT : Ogre::HardwareIndexBuffer::IT_32BIT,
-					indexCount, Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY, false);
-				int sizeInBytes = lods.back()->indexBuffer->getSizeInBytes();
-				void* pOutBuff = lods.back()->indexBuffer->lock(0, sizeInBytes, Ogre::HardwareBuffer::HBL_DISCARD);
-				memcpy(pOutBuff, buff.indexBuffer, sizeInBytes);
-				lods.back()->indexBuffer->unlock();
-			}
+			lods.back()->indexBuffer = Ogre::HardwareBufferManager::getSingleton().createIndexBuffer(
+				buff.indexSize == 2 ?
+				Ogre::HardwareIndexBuffer::IT_16BIT : Ogre::HardwareIndexBuffer::IT_32BIT,
+				indexCount, Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY, false);
+			int sizeInBytes = lods.back()->indexBuffer->getSizeInBytes();
+			void* pOutBuff = lods.back()->indexBuffer->lock(0, sizeInBytes, Ogre::HardwareBuffer::HBL_DISCARD);
+			memcpy(pOutBuff, buff.indexBuffer, sizeInBytes);
+			lods.back()->indexBuffer->unlock();
 		}
 	}
 	static_cast<EmberOgreMesh*>(mesh.get())->_configureMeshLodUsage(request->config);
@@ -371,13 +369,12 @@ void QueuedProgressiveMeshGenerator::copyIndexBuffer(Ogre::IndexData* data, PMGe
 	const Ogre::HardwareIndexBufferSharedPtr& indexBuffer = data->indexBuffer;
 	out.indexSize = indexBuffer->getIndexSize();
 	out.indexCount = data->indexCount;
-	if (out.indexCount > 0) {
-		unsigned char* pBuffer = (unsigned char*) indexBuffer->lock(Ogre::HardwareBuffer::HBL_READ_ONLY);
-		size_t offset = data->indexStart * out.indexSize;
-		out.indexBuffer = new unsigned char[out.indexCount * out.indexSize];
-		memcpy(out.indexBuffer, pBuffer + offset, out.indexCount * out.indexSize);
-		indexBuffer->unlock();
-	}
+	assert(out.indexCount != 0);
+	unsigned char* pBuffer = (unsigned char*) indexBuffer->lock(Ogre::HardwareBuffer::HBL_READ_ONLY);
+	size_t offset = data->indexStart * out.indexSize;
+	out.indexBuffer = new unsigned char[out.indexCount * out.indexSize];
+	memcpy(out.indexBuffer, pBuffer + offset, out.indexCount * out.indexSize);
+	indexBuffer->unlock();
 }
 
 void QueuedProgressiveMeshGenerator::copyBuffers(Ogre::Mesh* mesh, PMGenRequest* req)

@@ -233,18 +233,19 @@ void ProgressiveMeshGenerator::addIndexDataImpl(IndexType* iPos, const IndexType
 		tri->computeNormal();
 		addTriangleToEdges(tri);
 	}
+	// The submesh doesn't contain any non-malformed triangles!
+	// Empty HW buffer causes driver/platform specific issues.
+	assert(mIndexBufferInfoList[submeshID].indexCount != 0);
 }
 
 void ProgressiveMeshGenerator::addIndexData(Ogre::IndexData* indexData, bool useSharedVertexLookup, unsigned short submeshID)
 {
+	// Empty HW buffer causes driver/platform specific issues.
+	assert(indexData->indexCount != 0);
 	const Ogre::HardwareIndexBufferSharedPtr& ibuf = indexData->indexBuffer;
 	size_t isize = ibuf->getIndexSize();
 	mIndexBufferInfoList[submeshID].indexSize = isize;
 	mIndexBufferInfoList[submeshID].indexCount = indexData->indexCount;
-	if (indexData->indexCount == 0) {
-		// Locking a zero length buffer on linux with nvidia cards fails.
-		return;
-	}
 	VertexLookupList& lookup = useSharedVertexLookup ? mSharedVertexLookup : mVertexLookup;
 
 	// Lock the buffer for reading.
@@ -380,6 +381,8 @@ void ProgressiveMeshGenerator::addTriangleToEdges(PMTriangle* triangle)
 		S_LOG_WARNING(str.str());
 		triangle->isRemoved = true;
 		mIndexBufferInfoList[triangle->submeshID].indexCount -= 3;
+		// Empty HW buffer causes driver/platform specific issues.
+		assert(mIndexBufferInfoList[triangle->submeshID].indexCount != 0);
 		return;
 	}
 #endif // ifdef PM_BEST_QUALITY
@@ -794,9 +797,10 @@ void ProgressiveMeshGenerator::collapse(PMVertex* src)
 			// Remove a triangle
 			// Tasks:
 			// 1. Add it to the collapsed edges list.
-			// 2. Reduce index count for the Lods, which will not have this triangle.
-			// 3. Mark as removed, so it will not be added in upcoming Lod levels.
-			// 4. Remove references/pointers to this triangle.
+			// 2. Remove references/pointers to this triangle.
+			// 3. Reduce index count for the Lods, which will not have this triangle.
+			// 4. Mark as removed, so it will not be added in upcoming Lod levels.
+			
 
 			// 1. task
 			unsigned int srcID = triangle->getVertexID(src);
@@ -808,13 +812,16 @@ void ProgressiveMeshGenerator::collapse(PMVertex* src)
 			}
 
 			// 2. task
-			mIndexBufferInfoList[triangle->submeshID].indexCount -= 3;
-
-			// 3. task
-			triangle->isRemoved = true;
-
-			// 4. task
 			removeTriangleFromEdges(triangle, src);
+
+			//Keep last triangle on submesh, because empty HW buffer causes driver/platform specific issues.
+			if (mIndexBufferInfoList[triangle->submeshID].indexCount != 3) {
+				// 3. task
+				mIndexBufferInfoList[triangle->submeshID].indexCount -= 3;
+
+				// 4. task
+				triangle->isRemoved = true;
+			}	
 		}
 	}
 	assert(tmpCollapsedEdges.size());
@@ -836,9 +843,13 @@ void ProgressiveMeshGenerator::collapse(PMVertex* src)
 			if (id == -1) {
 				// Not found any edge to move along.
 				// Destroy the triangle.
-				triangle->isRemoved = true;
-				mIndexBufferInfoList[triangle->submeshID].indexCount -= 3;
 				removeTriangleFromEdges(triangle, src);
+				//Keep last triangle on submesh, because empty HW buffer causes driver/platform specific issues.
+				if (mIndexBufferInfoList[triangle->submeshID].indexCount != 3) {
+					mIndexBufferInfoList[triangle->submeshID].indexCount -= 3;
+					triangle->isRemoved = true;
+				}
+				
 				continue;
 			}
 			unsigned int dstID = tmpCollapsedEdges[id].dstID;
@@ -947,23 +958,20 @@ void ProgressiveMeshGenerator::bakeLods(const LodLevel& lodConfigs)
 		lods.push_back(OGRE_NEW Ogre::IndexData());
 		lods.back()->indexStart = 0;
 		lods.back()->indexCount = indexCount;
-		if (indexCount != 0) {
-			lods.back()->indexBuffer = Ogre::HardwareBufferManager::getSingleton().createIndexBuffer(
-				mIndexBufferInfoList[i].indexSize == 2 ?
-				Ogre::HardwareIndexBuffer::IT_16BIT : Ogre::HardwareIndexBuffer::IT_32BIT,
-				indexCount, Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY, false);
-			// Locking a zero length buffer on linux with nvidia cards fails, so we need to wrap it.
-			indexBuffer.get()[i].pshort =
-			    static_cast<unsigned short*>(lods.back()->indexBuffer->lock(0, lods.back()->indexBuffer->getSizeInBytes(),
-			                                                                Ogre::HardwareBuffer::HBL_DISCARD));
-		}
+		lods.back()->indexBuffer = Ogre::HardwareBufferManager::getSingleton().createIndexBuffer(
+			mIndexBufferInfoList[i].indexSize == 2 ?
+			Ogre::HardwareIndexBuffer::IT_16BIT : Ogre::HardwareIndexBuffer::IT_32BIT,
+			indexCount, Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY, false);
+		// Locking a zero length buffer on linux with nvidia cards fails, so we need to wrap it.
+		indexBuffer.get()[i].pshort =
+		    static_cast<unsigned short*>(lods.back()->indexBuffer->lock(0, lods.back()->indexBuffer->getSizeInBytes(),
+		                                                                Ogre::HardwareBuffer::HBL_DISCARD));
 	}
 
 	// Fill buffers.
 	size_t triangleCount = mTriangleList.size();
 	for (size_t i = 0; i < triangleCount; i++) {
 		if (!mTriangleList[i].isRemoved) {
-			assert(mIndexBufferInfoList[mTriangleList[i].submeshID].indexCount != 0);
 			if (mIndexBufferInfoList[mTriangleList[i].submeshID].indexSize == 2) {
 				for (int m = 0; m < 3; m++) {
 					*(indexBuffer.get()[mTriangleList[i].submeshID].pshort++) =
@@ -980,10 +988,8 @@ void ProgressiveMeshGenerator::bakeLods(const LodLevel& lodConfigs)
 
 	// Close buffers.
 	for (unsigned short i = 0; i < submeshCount; i++) {
-		if (mIndexBufferInfoList[mTriangleList[i].submeshID].indexCount) {
-			Ogre::SubMesh::LODFaceList& lods = mMesh->getSubMesh(i)->mLodFaceList;
-			lods.back()->indexBuffer->unlock();
-		}
+		Ogre::SubMesh::LODFaceList& lods = mMesh->getSubMesh(i)->mLodFaceList;
+		lods.back()->indexBuffer->unlock();
 	}
 }
 
