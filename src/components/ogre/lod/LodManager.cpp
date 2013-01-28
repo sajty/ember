@@ -20,8 +20,8 @@
 #include "LodDefinition.h"
 #include "LodDefinitionManager.h"
 #include "EmberOgreMesh.h"
-#include "QueuedProgressiveMeshGenerator.h"
 
+#include <OgreQueuedProgressiveMeshGenerator.h>
 #include <OgrePixelCountLodStrategy.h>
 #include <OgreDistanceLodStrategy.h>
 

@@ -1,43 +1,40 @@
 /*
- * Copyright (C) 2012 Peter Szucs <peter.szucs.dev@gmail.com>
+ * -----------------------------------------------------------------------------
+ * This source file is part of OGRE
+ * (Object-oriented Graphics Rendering Engine)
+ * For the latest info, see http://www.ogre3d.org/
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Copyright (c) 2000-2013 Torus Knot Software Ltd
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * -----------------------------------------------------------------------------
  */
 
-#ifndef QUEUDPROGRESSIVEMESHGENERATOR_H
-#define QUEUDPROGRESSIVEMESHGENERATOR_H
+#ifndef __QueuedProgressiveMeshGenerator_H_
+#define __QueuedProgressiveMeshGenerator_H_
 
-#include "LodConfig.h"
-#include "ProgressiveMeshGenerator.h"
-#include "EmberOgreMesh.h"
+#include "OgreProgressiveMeshGenerator.h"
+#include "OgreSingleton.h"
+#include "OgreWorkQueue.h"
+#include "OgreFrameListener.h"
 
-#include "components/ogre/EmberOgrePrerequisites.h"
-#include "framework/Singleton.h"
-
-#include <OgreProgressiveMesh.h>
-#include <OgreWorkQueue.h>
-#include <OgreRoot.h>
-
-#include <string>
-#include <stack>
-
-namespace Ember
-{
-namespace OgreView
-{
-namespace Lod
+namespace Ogre
 {
 
 /**
@@ -46,7 +43,7 @@ namespace Lod
 struct PMGenRequest {
 	struct VertexBuffer {
 		size_t vertexCount;
-		Ogre::Vector3* vertexBuffer;
+		Vector3* vertexBuffer;
 		VertexBuffer() :
 			vertexBuffer(0) { }
 	};
@@ -74,7 +71,7 @@ struct PMGenRequest {
  * @brief Processes requests.
  */
 class PMWorker :
-	private Ogre::WorkQueue::RequestHandler,
+	private WorkQueue::RequestHandler,
 	private ProgressiveMeshGenerator
 {
 public:
@@ -84,7 +81,7 @@ private:
 	OGRE_AUTO_MUTEX; // Mutex to force processing one mesh at a time.
 	PMGenRequest* mRequest; // This is a copy of the current processed request from stack. This is needed to pass it to overloaded functions like bakeLods().
 
-	Ogre::WorkQueue::Response* handleRequest(const Ogre::WorkQueue::Request* req, const Ogre::WorkQueue* srcQ);
+	WorkQueue::Response* handleRequest(const WorkQueue::Request* req, const WorkQueue* srcQ);
 	void buildRequest(LodConfig& lodConfigs);
 	void tuneContainerSize();
 	void initialize();
@@ -97,8 +94,8 @@ private:
  * @brief Injects the output of a request to the mesh in a thread safe way.
  */
 class PMInjector :
-	public Ogre::WorkQueue::ResponseHandler,
-	public Ogre::FrameListener
+	public WorkQueue::ResponseHandler,
+	public FrameListener
 {
 public:
 	PMInjector();
@@ -107,16 +104,15 @@ public:
 	/**
 	 * @brief It will add every generated Lod to readyLods for injection, because this is not called on main thread.
 	 */
-	void handleResponse(const Ogre::WorkQueue::Response* res, const Ogre::WorkQueue* srcQ);
+	void handleResponse(const WorkQueue::Response* res, const WorkQueue* srcQ);
 protected:
 	OGRE_AUTO_MUTEX; // Mutex for readyLods access.
 
-	// TODO: use thread safe circular queue instead of mutex and stack.
-	std::stack<PMGenRequest*> readyLods;
+	std::vector<PMGenRequest*> readyLods;
 
 	// Overloaded function, called every frame by Ogre on main thread.
 	// This will call inject on each ready Lod.
-	bool frameStarted(const Ogre::FrameEvent& evt);
+	bool frameStarted(const FrameEvent& evt);
 
 	// Copies every generated Lod level to the mesh.
 	void inject(PMGenRequest* request);
@@ -131,12 +127,10 @@ public:
 	void build(LodConfig& lodConfig);
 	virtual ~QueuedProgressiveMeshGenerator();
 private:
-	void copyVertexBuffer(Ogre::VertexData* data, PMGenRequest::VertexBuffer& out);
-	void copyIndexBuffer(Ogre::IndexData* data, PMGenRequest::IndexBuffer& out);
-	void copyBuffers(Ogre::Mesh* mesh, PMGenRequest* req);
+	void copyVertexBuffer(VertexData* data, PMGenRequest::VertexBuffer& out);
+	void copyIndexBuffer(IndexData* data, PMGenRequest::IndexBuffer& out);
+	void copyBuffers(Mesh* mesh, PMGenRequest* req);
 };
 
 }
-}
-}
-#endif // ifndef QUEUDPROGRESSIVEMESHGENERATOR_H
+#endif

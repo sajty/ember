@@ -19,8 +19,7 @@
 #ifndef EMBEROGREMESH_H
 #define EMBEROGREMESH_H
 
-#include "ProgressiveMeshGenerator.h"
-
+#include <OgreProgressiveMeshGenerator.h>
 #include <OgreMesh.h>
 
 namespace Ember
@@ -50,7 +49,7 @@ public:
 	/**
 	 * @brief It will configure Lod usage based on a LodConfig.
 	 */
-	void _configureMeshLodUsage(const LodConfig& lodConfigs);
+	void _configureMeshLodUsage(const Ogre::LodConfig& lodConfigs);
 
 };
 

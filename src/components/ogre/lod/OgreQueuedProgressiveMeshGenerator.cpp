@@ -1,35 +1,43 @@
-/*
- * Copyright (C) 2012 Peter Szucs <peter.szucs.dev@gmail.com>
+﻿/*
+ * -----------------------------------------------------------------------------
+ * This source file is part of OGRE
+ * (Object-oriented Graphics Rendering Engine)
+ * For the latest info, see http://www.ogre3d.org/
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Copyright (c) 2000-2013 Torus Knot Software Ltd
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * -----------------------------------------------------------------------------
  */
 
-#include "QueuedProgressiveMeshGenerator.h"
+#include "EmberOgreMesh.h"
 
-#include <OgreSubMesh.h>
-#include <OgreHardwareBufferManager.h>
+#include "OgreStableHeaders.h"
 
-template<>
-Ember::OgreView::Lod::QueuedProgressiveMeshGenerator *
-Ember::Singleton<Ember::OgreView::Lod::QueuedProgressiveMeshGenerator>::ms_Singleton = 0;
+#include "OgreQueuedProgressiveMeshGenerator.h"
 
-namespace Ember
-{
-namespace OgreView
-{
-namespace Lod
+#include "OgreSubMesh.h"
+#include "OgreHardwareBufferManager.h"
+#include "OgreRoot.h"
+
+
+namespace Ogre
 {
 
 PMGenRequest::~PMGenRequest()
@@ -48,10 +56,10 @@ PMGenRequest::~PMGenRequest()
 }
 
 
-Ember::OgreView::Lod::PMWorker::PMWorker() :
+PMWorker::PMWorker() :
 		mRequest(nullptr)
 {
-	Ogre::WorkQueue* wq = Ogre::Root::getSingleton().getWorkQueue();
+	WorkQueue* wq = Root::getSingleton().getWorkQueue();
 	unsigned short workQueueChannel = wq->getChannel("PMGen");
 	wq->addRequestHandler(workQueueChannel, this);
 }
@@ -59,9 +67,9 @@ Ember::OgreView::Lod::PMWorker::PMWorker() :
 
 PMWorker::~PMWorker()
 {
-	Ogre::Root* root = Ogre::Root::getSingletonPtr();
+	Root* root = Root::getSingletonPtr();
 	if (root) {
-		Ogre::WorkQueue* wq = root->getWorkQueue();
+		WorkQueue* wq = root->getWorkQueue();
 		if (wq) {
 			unsigned short workQueueChannel = wq->getChannel("PMGen");
 			wq->removeRequestHandler(workQueueChannel, this);
@@ -69,13 +77,13 @@ PMWorker::~PMWorker()
 	}
 }
 
-Ogre::WorkQueue::Response* PMWorker::handleRequest(const Ogre::WorkQueue::Request* req, const Ogre::WorkQueue* srcQ)
+WorkQueue::Response* PMWorker::handleRequest(const WorkQueue::Request* req, const WorkQueue* srcQ)
 {
-	// Called on worker thread by Ogre::WorkQueue.
+	// Called on worker thread by WorkQueue.
 	OGRE_LOCK_MUTEX(this->OGRE_AUTO_MUTEX_NAME);
-	mRequest = Ogre::any_cast<PMGenRequest*>(req->getData());
+	mRequest = any_cast<PMGenRequest*>(req->getData());
 	buildRequest(mRequest->config);
-	return OGRE_NEW Ogre::WorkQueue::Response(req, true, req->getData());
+	return OGRE_NEW WorkQueue::Response(req, true, req->getData());
 }
 
 
@@ -155,8 +163,8 @@ void PMWorker::addVertexBuffer(const PMGenRequest::VertexBuffer& vertexBuffer, b
 	lookup.clear();
 
 	// Loop through all vertices and insert them to the Unordered Map.
-	Ogre::Vector3* pOut = vertexBuffer.vertexBuffer;
-	Ogre::Vector3* pEnd = vertexBuffer.vertexBuffer + vertexBuffer.vertexCount;
+	Vector3* pOut = vertexBuffer.vertexBuffer;
+	Vector3* pEnd = vertexBuffer.vertexBuffer + vertexBuffer.vertexCount;
 	for (; pOut < pEnd; pOut++) {
 		mVertexList.push_back(PMVertex());
 		PMVertex* v = &mVertexList.back();
@@ -271,17 +279,17 @@ void PMWorker::bakeLods()
 
 PMInjector::PMInjector()
 {
-	Ogre::WorkQueue* wq = Ogre::Root::getSingleton().getWorkQueue();
+	WorkQueue* wq = Root::getSingleton().getWorkQueue();
 	unsigned short workQueueChannel = wq->getChannel("PMGen");
 	wq->addResponseHandler(workQueueChannel, this);
-	Ogre::Root::getSingleton().addFrameListener(this);
+	Root::getSingleton().addFrameListener(this);
 }
 
 PMInjector::~PMInjector()
 {
-	Ogre::Root* root = Ogre::Root::getSingletonPtr();
+	Root* root = Root::getSingletonPtr();
 	if (root) {
-		Ogre::WorkQueue* wq = root->getWorkQueue();
+		WorkQueue* wq = root->getWorkQueue();
 		if (wq) {
 			unsigned short workQueueChannel = wq->getChannel("PMGen");
 			wq->removeResponseHandler(workQueueChannel, this);
@@ -290,33 +298,33 @@ PMInjector::~PMInjector()
 	}
 }
 
-void PMInjector::handleResponse(const Ogre::WorkQueue::Response* res, const Ogre::WorkQueue* srcQ)
+void PMInjector::handleResponse(const WorkQueue::Response* res, const WorkQueue* srcQ)
 {
-	PMGenRequest* request = Ogre::any_cast<PMGenRequest*>(res->getData());
+	PMGenRequest* request = any_cast<PMGenRequest*>(res->getData());
 	OGRE_LOCK_MUTEX(this->OGRE_AUTO_MUTEX_NAME);
-	readyLods.push(request);
+	readyLods.push_back(request);
 }
 
-bool PMInjector::frameStarted(const Ogre::FrameEvent& evt)
+bool PMInjector::frameStarted(const FrameEvent& evt)
 {
 	OGRE_LOCK_MUTEX(this->OGRE_AUTO_MUTEX_NAME);
 	while (!readyLods.empty()) {
-		PMGenRequest* request = readyLods.top();
+		PMGenRequest* request = readyLods.back();
 		inject(request);
 		delete request;
-		readyLods.pop();
+		readyLods.pop_back();
 	}
 	return true;
 }
 
 void PMInjector::inject(PMGenRequest* request)
 {
-	const Ogre::MeshPtr& mesh = request->config.mesh;
+	const MeshPtr& mesh = request->config.mesh;
 	unsigned short submeshCount = request->submesh.size();
 	assert(mesh->getNumSubMeshes() == submeshCount);
 	mesh->removeLodLevels();
 	for (unsigned short i = 0; i < submeshCount; i++) {
-		Ogre::SubMesh::LODFaceList& lods = mesh->getSubMesh(i)->mLodFaceList;
+		SubMesh::LODFaceList& lods = mesh->getSubMesh(i)->mLodFaceList;
 		typedef std::vector<PMGenRequest::IndexBuffer> GenBuffers;
 		GenBuffers& buffers = request->submesh[i].genIndexBuffers;
 		GenBuffers::iterator it = buffers.begin();
@@ -325,22 +333,22 @@ void PMInjector::inject(PMGenRequest* request)
 			PMGenRequest::IndexBuffer& buff = *it;
 			int indexCount = buff.indexCount;
 			assert(indexCount >= 0);
-			lods.push_back(OGRE_NEW Ogre::IndexData());
+			lods.push_back(OGRE_NEW IndexData());
 			lods.back()->indexStart = 0;
 			lods.back()->indexCount = indexCount;
 			if(indexCount != 0) {
-				lods.back()->indexBuffer = Ogre::HardwareBufferManager::getSingleton().createIndexBuffer(
+				lods.back()->indexBuffer = HardwareBufferManager::getSingleton().createIndexBuffer(
 					buff.indexSize == 2 ?
-					Ogre::HardwareIndexBuffer::IT_16BIT : Ogre::HardwareIndexBuffer::IT_32BIT,
-					indexCount, Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY, false);
+					HardwareIndexBuffer::IT_16BIT : HardwareIndexBuffer::IT_32BIT,
+					indexCount, HardwareBuffer::HBU_STATIC_WRITE_ONLY, false);
 				int sizeInBytes = lods.back()->indexBuffer->getSizeInBytes();
-				void* pOutBuff = lods.back()->indexBuffer->lock(0, sizeInBytes, Ogre::HardwareBuffer::HBL_DISCARD);
+				void* pOutBuff = lods.back()->indexBuffer->lock(0, sizeInBytes, HardwareBuffer::HBL_DISCARD);
 				memcpy(pOutBuff, buff.indexBuffer, sizeInBytes);
 				lods.back()->indexBuffer->unlock();
 			}
 		}
 	}
-	static_cast<EmberOgreMesh*>(mesh.get())->_configureMeshLodUsage(request->config);
+	static_cast<Ember::OgreView::Lod::EmberOgreMesh*>(mesh.get())->_configureMeshLodUsage(request->config);
 }
 
 
@@ -354,7 +362,7 @@ void QueuedProgressiveMeshGenerator::build(LodConfig& lodConfig)
 	assert(lodConfig.levels.size() <= 0xffff);
 
 	// Lod distances needs to be sorted.
-	Ogre::Mesh::LodValueList values;
+	Mesh::LodValueList values;
 	for (size_t i = 0; i < lodConfig.levels.size(); i++) {
 		values.push_back(lodConfig.levels[i].distance);
 	}
@@ -365,33 +373,33 @@ void QueuedProgressiveMeshGenerator::build(LodConfig& lodConfig)
 	req->meshName = lodConfig.mesh->getName();
 	req->config = lodConfig;
 	copyBuffers(lodConfig.mesh.get(), req);
-	Ogre::WorkQueue* wq = Ogre::Root::getSingleton().getWorkQueue();
+	WorkQueue* wq = Root::getSingleton().getWorkQueue();
 	unsigned short workQueueChannel = wq->getChannel("PMGen");
-	wq->addRequest(workQueueChannel, 0, Ogre::Any(req));
+	wq->addRequest(workQueueChannel, 0, Any(req));
 }
 
-void QueuedProgressiveMeshGenerator::copyVertexBuffer(Ogre::VertexData* data, PMGenRequest::VertexBuffer& out)
+void QueuedProgressiveMeshGenerator::copyVertexBuffer(VertexData* data, PMGenRequest::VertexBuffer& out)
 {
 	// Locate position element and the buffer to go with it.
-	const Ogre::VertexElement* elem = data->vertexDeclaration->findElementBySemantic(Ogre::VES_POSITION);
+	const VertexElement* elem = data->vertexDeclaration->findElementBySemantic(VES_POSITION);
 
 	// Only float supported.
 	assert(elem->getSize() == 12);
 
-	Ogre::HardwareVertexBufferSharedPtr vbuf = data->vertexBufferBinding->getBuffer(elem->getSource());
+	HardwareVertexBufferSharedPtr vbuf = data->vertexBufferBinding->getBuffer(elem->getSource());
 
 	out.vertexCount = data->vertexCount;
-	out.vertexBuffer = new Ogre::Vector3[out.vertexCount];
+	out.vertexBuffer = new Vector3[out.vertexCount];
 
 	if (out.vertexCount > 0) {
 		// Lock the buffer for reading.
-		unsigned char* vStart = static_cast<unsigned char*>(vbuf->lock(Ogre::HardwareBuffer::HBL_READ_ONLY));
+		unsigned char* vStart = static_cast<unsigned char*>(vbuf->lock(HardwareBuffer::HBL_READ_ONLY));
 		unsigned char* vertex = vStart;
 		int vSize = vbuf->getVertexSize();
 
 		// Loop through all vertices and insert them to the Unordered Map.
-		Ogre::Vector3* pOut = out.vertexBuffer;
-		Ogre::Vector3* pEnd = out.vertexBuffer + out.vertexCount;
+		Vector3* pOut = out.vertexBuffer;
+		Vector3* pEnd = out.vertexBuffer + out.vertexCount;
 		for (; pOut < pEnd; pOut++) {
 			float* pFloat;
 			elem->baseVertexPointerToElement(vertex, &pFloat);
@@ -404,13 +412,13 @@ void QueuedProgressiveMeshGenerator::copyVertexBuffer(Ogre::VertexData* data, PM
 	}
 }
 
-void QueuedProgressiveMeshGenerator::copyIndexBuffer(Ogre::IndexData* data, PMGenRequest::IndexBuffer& out)
+void QueuedProgressiveMeshGenerator::copyIndexBuffer(IndexData* data, PMGenRequest::IndexBuffer& out)
 {
-	const Ogre::HardwareIndexBufferSharedPtr& indexBuffer = data->indexBuffer;
+	const HardwareIndexBufferSharedPtr& indexBuffer = data->indexBuffer;
 	out.indexSize = indexBuffer->getIndexSize();
 	out.indexCount = data->indexCount;
 	if (out.indexCount > 0) {
-		unsigned char* pBuffer = (unsigned char*) indexBuffer->lock(Ogre::HardwareBuffer::HBL_READ_ONLY);
+		unsigned char* pBuffer = (unsigned char*) indexBuffer->lock(HardwareBuffer::HBL_READ_ONLY);
 		size_t offset = data->indexStart * out.indexSize;
 		out.indexBuffer = new unsigned char[out.indexCount * out.indexSize];
 		memcpy(out.indexBuffer, pBuffer + offset, out.indexCount * out.indexSize);
@@ -418,14 +426,14 @@ void QueuedProgressiveMeshGenerator::copyIndexBuffer(Ogre::IndexData* data, PMGe
 	}
 }
 
-void QueuedProgressiveMeshGenerator::copyBuffers(Ogre::Mesh* mesh, PMGenRequest* req)
+void QueuedProgressiveMeshGenerator::copyBuffers(Mesh* mesh, PMGenRequest* req)
 {
 	// Get Vertex count for container tuning.
 	bool sharedVerticesAdded = false;
 	unsigned short submeshCount = mesh->getNumSubMeshes();
 	req->submesh.resize(submeshCount);
 	for (unsigned short i = 0; i < submeshCount; i++) {
-		const Ogre::SubMesh* submesh = mesh->getSubMesh(i);
+		const SubMesh* submesh = mesh->getSubMesh(i);
 		PMGenRequest::SubmeshInfo& outsubmesh = req->submesh[i];
 		copyIndexBuffer(submesh->indexData, outsubmesh.indexBuffer);
 		outsubmesh.useSharedVertexBuffer = submesh->useSharedVertices;
@@ -443,6 +451,4 @@ QueuedProgressiveMeshGenerator::~QueuedProgressiveMeshGenerator()
 {
 }
 
-}
-}
 }

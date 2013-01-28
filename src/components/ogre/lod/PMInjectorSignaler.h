@@ -19,7 +19,7 @@
 #ifndef PMINJECTORSIGNALER_H
 #define PMINJECTORSIGNALER_H
 
-#include "QueuedProgressiveMeshGenerator.h"
+#include <OgreQueuedProgressiveMeshGenerator.h>
 #include "components/ogre/EmberOgrePrerequisites.h"
 #include "framework/Singleton.h"
 #include <sigc++/signal.h>

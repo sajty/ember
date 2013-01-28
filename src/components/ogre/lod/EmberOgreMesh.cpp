@@ -18,10 +18,10 @@
 
 #include "EmberOgreMesh.h"
 #include "LodManager.h"
-#include "ProgressiveMeshGenerator.h"
 
 #include "framework/LoggingInstance.h"
 
+#include <OgreProgressiveMeshGenerator.h>
 #include <OgreSubMesh.h>
 #include <OgreLodStrategy.h>
 #include <OgrePixelCountLodStrategy.h>

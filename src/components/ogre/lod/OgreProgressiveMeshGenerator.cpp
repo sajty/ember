@@ -1,29 +1,10 @@
-/*
- * Copyright (C) 2012 Peter Szucs <peter.szucs.dev@gmail.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
-// The collapse cost calculation in this file is based heavily on Ogre's implementation:
-/*
+﻿/*
  * -----------------------------------------------------------------------------
  * This source file is part of OGRE
  * (Object-oriented Graphics Rendering Engine)
  * For the latest info, see http://www.ogre3d.org/
  *
- * Copyright (c) 2000-2011 Torus Knot Software Ltd
+ * Copyright (c) 2000-2013 Torus Knot Software Ltd
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -55,30 +36,22 @@
 // #define PM_BEST_QUALITY
 // #define NDEBUG
 
-
-#include "ProgressiveMeshGenerator.h"
 #include "EmberOgreMesh.h"
 
-#include "framework/LoggingInstance.h"
+#include "OgreStableHeaders.h"
+#include "OgreProgressiveMeshGenerator.h"
+#include "OgreHardwareIndexBuffer.h"
+#include "OgreHardwareBufferManager.h"
+#include "OgreSubMesh.h"
+#include "OgreMesh.h"
+#include "OgreLodStrategy.h"
+#include "OgreLogManager.h"
 
-#include <OgreHardwareIndexBuffer.h>
-#include <OgreHardwareBufferManager.h>
-#include <OgreSubMesh.h>
-#include <OgreMesh.h>
-#include <OgreLodStrategy.h>
-
-#include <limits>
-#include <sstream>
-
-namespace Ember
-{
-namespace OgreView
-{
-namespace Lod
+namespace Ogre
 {
 
-#define NEVER_COLLAPSE_COST std::numeric_limits<Ogre::Real>::max()
-#define UNINITIALIZED_COLLAPSE_COST (std::numeric_limits<Ogre::Real>::infinity())
+#define NEVER_COLLAPSE_COST std::numeric_limits<Real>::max()
+#define UNINITIALIZED_COLLAPSE_COST (std::numeric_limits<Real>::infinity())
 
 ProgressiveMeshGenerator::ProgressiveMeshGenerator() :
 	mMesh(nullptr), mMeshBoundingSphereRadius(0.0f), mCollapseCostLimit(NEVER_COLLAPSE_COST)
@@ -100,7 +73,7 @@ void ProgressiveMeshGenerator::tuneContainerSize()
 	size_t sharedVertexLookupSize = 0;
 	unsigned short submeshCount = mMesh->getNumSubMeshes();
 	for (unsigned short i = 0; i < submeshCount; i++) {
-		const Ogre::SubMesh* submesh = mMesh->getSubMesh(i);
+		const SubMesh* submesh = mMesh->getSubMesh(i);
 		if (!submesh->useSharedVertices) {
 			size_t count = submesh->vertexData->vertexCount;
 			vertexLookupSize = std::max(vertexLookupSize, count);
@@ -130,8 +103,8 @@ void ProgressiveMeshGenerator::initialize()
 	mMeshName = mMesh->getName();
 	unsigned short submeshCount = mMesh->getNumSubMeshes();
 	for (unsigned short i = 0; i < submeshCount; ++i) {
-		const Ogre::SubMesh* submesh = mMesh->getSubMesh(i);
-		Ogre::VertexData* vertexData = (submesh->useSharedVertices ? mMesh->sharedVertexData : submesh->vertexData);
+		const SubMesh* submesh = mMesh->getSubMesh(i);
+		VertexData* vertexData = (submesh->useSharedVertices ? mMesh->sharedVertexData : submesh->vertexData);
 		addVertexData(vertexData, submesh->useSharedVertices);
 		addIndexData(submesh->indexData, submesh->useSharedVertices, i);
 	}
@@ -145,13 +118,13 @@ void ProgressiveMeshGenerator::initialize()
 void ProgressiveMeshGenerator::PMTriangle::computeNormal()
 {
 	// Cross-product 2 edges
-	Ogre::Vector3 e1 = vertex[1]->position - vertex[0]->position;
-	Ogre::Vector3 e2 = vertex[2]->position - vertex[1]->position;
+	Vector3 e1 = vertex[1]->position - vertex[0]->position;
+	Vector3 e2 = vertex[2]->position - vertex[1]->position;
 
 	normal = e1.crossProduct(e2);
 	normal.normalise();
 }
-void ProgressiveMeshGenerator::addVertexData(Ogre::VertexData* vertexData, bool useSharedVertexLookup)
+void ProgressiveMeshGenerator::addVertexData(VertexData* vertexData, bool useSharedVertexLookup)
 {
 	if ((useSharedVertexLookup && !mSharedVertexLookup.empty()) // We already loaded the shared vertex buffer.
 	    || vertexData->vertexCount == 0) { // Locking a zero length buffer on linux with nvidia cards fails.
@@ -159,15 +132,15 @@ void ProgressiveMeshGenerator::addVertexData(Ogre::VertexData* vertexData, bool 
 	}
 
 	// Locate position element and the buffer to go with it.
-	const Ogre::VertexElement* elem = vertexData->vertexDeclaration->findElementBySemantic(Ogre::VES_POSITION);
+	const VertexElement* elem = vertexData->vertexDeclaration->findElementBySemantic(VES_POSITION);
 
 	// Only float supported.
 	assert(elem->getSize() == 12);
 
-	Ogre::HardwareVertexBufferSharedPtr vbuf = vertexData->vertexBufferBinding->getBuffer(elem->getSource());
+	HardwareVertexBufferSharedPtr vbuf = vertexData->vertexBufferBinding->getBuffer(elem->getSource());
 
 	// Lock the buffer for reading.
-	unsigned char* vStart = static_cast<unsigned char*>(vbuf->lock(Ogre::HardwareBuffer::HBL_READ_ONLY));
+	unsigned char* vStart = static_cast<unsigned char*>(vbuf->lock(HardwareBuffer::HBL_READ_ONLY));
 	unsigned char* vertex = vStart;
 	int vSize = vbuf->getVertexSize();
 	unsigned char* vEnd = vertex + vertexData->vertexCount * vSize;
@@ -237,9 +210,9 @@ void ProgressiveMeshGenerator::addIndexDataImpl(IndexType* iPos, const IndexType
 	}
 }
 
-void ProgressiveMeshGenerator::addIndexData(Ogre::IndexData* indexData, bool useSharedVertexLookup, unsigned short submeshID)
+void ProgressiveMeshGenerator::addIndexData(IndexData* indexData, bool useSharedVertexLookup, unsigned short submeshID)
 {
-	const Ogre::HardwareIndexBufferSharedPtr& ibuf = indexData->indexBuffer;
+	const HardwareIndexBufferSharedPtr& ibuf = indexData->indexBuffer;
 	size_t isize = ibuf->getIndexSize();
 	mIndexBufferInfoList[submeshID].indexSize = isize;
 	mIndexBufferInfoList[submeshID].indexCount = indexData->indexCount;
@@ -250,7 +223,7 @@ void ProgressiveMeshGenerator::addIndexData(Ogre::IndexData* indexData, bool use
 	VertexLookupList& lookup = useSharedVertexLookup ? mSharedVertexLookup : mVertexLookup;
 
 	// Lock the buffer for reading.
-	char* iStart = static_cast<char*>(ibuf->lock(Ogre::HardwareBuffer::HBL_READ_ONLY));
+	char* iStart = static_cast<char*>(ibuf->lock(HardwareBuffer::HBL_READ_ONLY));
 	char* iEnd = iStart + ibuf->getSizeInBytes();
 	if (isize == sizeof(unsigned short)) {
 		addIndexDataImpl<unsigned short>((unsigned short*) iStart, (unsigned short*) iEnd, lookup, submeshID);
@@ -468,7 +441,7 @@ void ProgressiveMeshGenerator::computeVertexCollapseCost(PMVertex* vertex)
 
 }
 
-Ogre::Real ProgressiveMeshGenerator::computeEdgeCollapseCost(PMVertex* src, PMEdge* dstEdge)
+Real ProgressiveMeshGenerator::computeEdgeCollapseCost(PMVertex* src, PMEdge* dstEdge)
 {
 	// This is based on Ogre's collapse cost calculation algorithm.
 
@@ -501,10 +474,10 @@ Ogre::Real ProgressiveMeshGenerator::computeEdgeCollapseCost(PMVertex* src, PMEd
 				pv2 = (triangle->vertex[2] == src) ? dst : triangle->vertex[2];
 
 				// Cross-product 2 edges
-				Ogre::Vector3 e1 = pv1->position - pv0->position;
-				Ogre::Vector3 e2 = pv2->position - pv1->position;
+				Vector3 e1 = pv1->position - pv0->position;
+				Vector3 e2 = pv2->position - pv1->position;
 
-				Ogre::Vector3 newNormal = e1.crossProduct(e2);
+				Vector3 newNormal = e1.crossProduct(e2);
 				newNormal.normalise();
 
 				// Dot old and new face normal
@@ -517,7 +490,7 @@ Ogre::Real ProgressiveMeshGenerator::computeEdgeCollapseCost(PMVertex* src, PMEd
 		}
 	}
 
-	Ogre::Real cost;
+	Real cost;
 
 	// Special cases
 	// If we're looking at a border vertex
@@ -539,19 +512,19 @@ Ogre::Real ProgressiveMeshGenerator::computeEdgeCollapseCost(PMVertex* src, PMEd
 			// PMTriangle* triangle = findSideTriangle(src, dst);
 
 			cost = 0.0f;
-			Ogre::Vector3 collapseEdge = src->position - dst->position;
+			Vector3 collapseEdge = src->position - dst->position;
 			collapseEdge.normalise();
 			VEdges::iterator it = src->edges.begin();
 			VEdges::iterator itEnd = src->edges.end();
 			for (; it != itEnd; it++) {
 				PMVertex* neighbor = it->dst;
 				if (neighbor != dst && it->refCount == 1) {
-					Ogre::Vector3 otherBorderEdge = src->position - neighbor->position;
+					Vector3 otherBorderEdge = src->position - neighbor->position;
 					otherBorderEdge.normalise();
 					// This time, the nearer the dot is to -1, the better, because that means
 					// the edges are opposite each other, therefore less kinkiness
 					// Scale into [0..1]
-					Ogre::Real kinkiness = (otherBorderEdge.dotProduct(collapseEdge) + 1.002f) * 0.5f;
+					Real kinkiness = (otherBorderEdge.dotProduct(collapseEdge) + 1.002f) * 0.5f;
 					cost = std::max(cost, kinkiness);
 
 				}
@@ -568,7 +541,7 @@ Ogre::Real ProgressiveMeshGenerator::computeEdgeCollapseCost(PMVertex* src, PMEd
 		VTriangles::iterator it = src->triangles.begin();
 		VTriangles::iterator itEnd = src->triangles.end();
 		for (; it != itEnd; it++) {
-			Ogre::Real mincurv = 1.0f; // curve for face i and closer side to it
+			Real mincurv = 1.0f; // curve for face i and closer side to it
 			PMTriangle* triangle = *it;
 			VTriangles::iterator it2 = src->triangles.begin();
 			for (; it2 != itEnd; it2++) {
@@ -576,7 +549,7 @@ Ogre::Real ProgressiveMeshGenerator::computeEdgeCollapseCost(PMVertex* src, PMEd
 				if (triangle2->hasVertex(dst)) {
 
 					// Dot product of face normal gives a good delta angle
-					Ogre::Real dotprod = triangle->normal.dotProduct(triangle2->normal);
+					Real dotprod = triangle->normal.dotProduct(triangle2->normal);
 					// NB we do (1-..) to invert curvature where 1 is high curvature [0..1]
 					// Whilst dot product is high when angle difference is low
 					mincurv = std::min(mincurv, (1.002f - dotprod) * 0.5f);
@@ -621,7 +594,7 @@ void ProgressiveMeshGenerator::assertOutdatedCollapseCost(PMVertex* vertex)
 
 void ProgressiveMeshGenerator::updateVertexCollapseCost(PMVertex* vertex)
 {
-	Ogre::Real collapseCost = UNINITIALIZED_COLLAPSE_COST;
+	Real collapseCost = UNINITIALIZED_COLLAPSE_COST;
 	PMVertex* collapseTo = 0;
 	VEdges::iterator it = vertex->edges.begin();
 	VEdges::iterator itEnd = vertex->edges.end();
@@ -660,7 +633,7 @@ void ProgressiveMeshGenerator::build(LodConfig& lodConfig)
 	assert(lodConfig.levels.size() <= 0xffff);
 
 	// Lod distances needs to be sorted.
-	Ogre::Mesh::LodValueList values;
+	Mesh::LodValueList values;
 	for (size_t i = 0; i < lodConfig.levels.size(); i++) {
 		values.push_back(lodConfig.levels[i].distance);
 	}
@@ -678,7 +651,7 @@ void ProgressiveMeshGenerator::build(LodConfig& lodConfig)
 
 	computeLods(lodConfig);
 
-	static_cast<EmberOgreMesh*>(mMesh.get())->_configureMeshLodUsage(lodConfig);
+	static_cast<Ember::OgreView::Lod::EmberOgreMesh*>(mMesh.get())->_configureMeshLodUsage(lodConfig);
 }
 
 void ProgressiveMeshGenerator::computeLods(LodConfig& lodConfigs)
@@ -867,7 +840,7 @@ void ProgressiveMeshGenerator::collapse(PMVertex* src)
 #else
 	// TODO: Find out why is this needed. assertOutdatedCollapseCost() fails on some
 	// rare situations without this. For example goblin.mesh fails.
-	typedef Ogre::SmallVector<PMVertex*, 64> UpdatableList;
+	typedef SmallVector<PMVertex*, 64> UpdatableList;
 	UpdatableList updatable;
 	VEdges::iterator it3 = src->edges.begin();
 	VEdges::iterator it3End = src->edges.end();
@@ -948,10 +921,10 @@ void ProgressiveMeshGenerator::bakeLods()
 
 	// Create buffers.
 	for (unsigned short i = 0; i < submeshCount; i++) {
-		Ogre::SubMesh::LODFaceList& lods = mMesh->getSubMesh(i)->mLodFaceList;
+		SubMesh::LODFaceList& lods = mMesh->getSubMesh(i)->mLodFaceList;
 		int indexCount = mIndexBufferInfoList[i].indexCount;
 		assert(indexCount > 0);
-		lods.push_back(OGRE_NEW Ogre::IndexData());
+		lods.push_back(OGRE_NEW IndexData());
 		lods.back()->indexStart = 0;
 
 		if (indexCount == 0) {
@@ -970,19 +943,19 @@ void ProgressiveMeshGenerator::bakeLods()
 			lods.back()->indexCount = indexCount;
 		}
 
-		lods.back()->indexBuffer = Ogre::HardwareBufferManager::getSingleton().createIndexBuffer(
+		lods.back()->indexBuffer = HardwareBufferManager::getSingleton().createIndexBuffer(
 			mIndexBufferInfoList[i].indexSize == 2 ?
-			Ogre::HardwareIndexBuffer::IT_16BIT : Ogre::HardwareIndexBuffer::IT_32BIT,
-			lods.back()->indexCount, Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY, false);
+			HardwareIndexBuffer::IT_16BIT : HardwareIndexBuffer::IT_32BIT,
+			lods.back()->indexCount, HardwareBuffer::HBU_STATIC_WRITE_ONLY, false);
 		// Locking a zero length buffer on linux with nvidia cards fails, so we need to wrap it.
 		if (mIndexBufferInfoList[i].indexSize == 2) {
 			indexBuffer.get()[i].pshort =
 				static_cast<unsigned short*>(lods.back()->indexBuffer->lock(0, lods.back()->indexBuffer->getSizeInBytes(),
-																			Ogre::HardwareBuffer::HBL_DISCARD));
+																			HardwareBuffer::HBL_DISCARD));
 		} else {
 			indexBuffer.get()[i].pint =
 				static_cast<unsigned int*>(lods.back()->indexBuffer->lock(0, lods.back()->indexBuffer->getSizeInBytes(),
-																			Ogre::HardwareBuffer::HBL_DISCARD));
+																			HardwareBuffer::HBL_DISCARD));
 		}
 
 		//Check if we should fill it with a "dummy" triangle.
@@ -1024,7 +997,7 @@ void ProgressiveMeshGenerator::bakeLods()
 	// Close buffers.
 	for (unsigned short i = 0; i < submeshCount; i++) {
 		if (mIndexBufferInfoList[mTriangleList[i].submeshID].indexCount) {
-			Ogre::SubMesh::LODFaceList& lods = mMesh->getSubMesh(i)->mLodFaceList;
+			SubMesh::LODFaceList& lods = mMesh->getSubMesh(i)->mLodFaceList;
 			lods.back()->indexBuffer->unlock();
 		}
 	}
@@ -1108,7 +1081,7 @@ bool ProgressiveMeshGenerator::PMCollapseCostLess::operator() (const PMVertex* l
 
 size_t ProgressiveMeshGenerator::PMVertexHash::operator() (const PMVertex* v) const
 {
-	boost::hash<Ogre::Real> hasher;
+	boost::hash<Real> hasher;
 	return hasher(v->position.x)
 	       ^ hasher(v->position.y)
 	       ^ hasher(v->position.z);
@@ -1191,6 +1164,4 @@ typename ProgressiveMeshGenerator::VectorSet<T, S>::iterator ProgressiveMeshGene
 	return it;
 }
 
-}
-}
 }

@@ -1,49 +1,49 @@
 /*
- * Copyright (C) 2012 Peter Szucs <peter.szucs.dev@gmail.com>
+ * -----------------------------------------------------------------------------
+ * This source file is part of OGRE
+ * (Object-oriented Graphics Rendering Engine)
+ * For the latest info, see http://www.ogre3d.org/
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Copyright (c) 2000-2013 Torus Knot Software Ltd
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * -----------------------------------------------------------------------------
  */
 
-#ifndef PROGRESSIVEMESHGENERATOR_H
-#define PROGRESSIVEMESHGENERATOR_H
+#ifndef __ProgressiveMeshGenerator_H_
+#define __ProgressiveMeshGenerator_H_
 
-#include "LodConfig.h"
-
-#include <OgrePrerequisites.h>
-#include <OgreVector3.h>
+#include "OgrePrerequisites.h"
+#include "OgreVector3.h"
 #include "OgreSmallVector.h"
-#include <OgreMesh.h>
+#include "OgreMesh.h"
+#include "OgreLodConfig.h"
 
 #include <boost/unordered_set.hpp>
 
-#include <vector>
-#include <set>
-
-namespace Ember
+namespace Ogre
 {
-namespace OgreView
-{
-namespace Lod
-{
-
-struct LodConfig;
 
 /**
- * @brief Improved version of Ogre::ProgressiveMesh.
+ * @brief Improved version of ProgressiveMesh.
  */
-class ProgressiveMeshGenerator
+class _OgreExport ProgressiveMeshGenerator
 {
 public:
 
@@ -67,8 +67,8 @@ protected:
 	// You can remove in O(1) time, if you know the position of the item.
 	template<typename T, unsigned S>
 	struct VectorSet :
-		public Ogre::SmallVector<T, S> {
-		typedef typename Ogre::SmallVector<T, S>::iterator iterator;
+		public SmallVector<T, S> {
+		typedef typename SmallVector<T, S>::iterator iterator;
 
 		void addNotExists(const T& item); // Complexity: O(1)!!
 		void remove(iterator it); // Complexity: O(1)!!
@@ -120,7 +120,7 @@ protected:
 	// Directed edge
 	struct PMEdge {
 		PMVertex* dst;
-		Ogre::Real collapseCost;
+		Real collapseCost;
 		int refCount;
 
 		explicit PMEdge(PMVertex* destination);
@@ -131,8 +131,8 @@ protected:
 	};
 
 	struct PMVertex {
-		Ogre::Vector3 position;
-		Ogre::Real collapseCost;
+		Vector3 position;
+		Real collapseCost;
 		VEdges edges;
 		VTriangles triangles; // Triangle ID set, which are using this vertex.
 
@@ -143,7 +143,7 @@ protected:
 
 	struct PMTriangle {
 		PMVertex* vertex[3];
-		Ogre::Vector3 normal;
+		Vector3 normal;
 		bool isRemoved;
 		unsigned short submeshID; // ID of the submesh. Usable with mMesh.getSubMesh() function.
 		unsigned int vertexID[3]; // Vertex ID in the buffer associated with the submeshID.
@@ -179,7 +179,7 @@ protected:
 	CollapsedEdges tmpCollapsedEdges; // Tmp container used in collapse().
 	IndexBufferInfoList mIndexBufferInfoList;
 
-	Ogre::MeshPtr mMesh;
+	MeshPtr mMesh;
 
 	/**
 	 * @brief The name of the mesh being processed.
@@ -187,21 +187,21 @@ protected:
 	 * This is separate from mMesh in order to allow for access from background threads.
 	 */
 	std::string mMeshName;
-	Ogre::Real mMeshBoundingSphereRadius;
-	Ogre::Real mCollapseCostLimit;
+	Real mMeshBoundingSphereRadius;
+	Real mCollapseCostLimit;
 
 	size_t calcLodVertexCount(const LodLevel& lodConfig);
 	void tuneContainerSize();
-	void addVertexData(Ogre::VertexData* vertexData, bool useSharedVertexLookup);
+	void addVertexData(VertexData* vertexData, bool useSharedVertexLookup);
 	template<typename IndexType>
 	void addIndexDataImpl(IndexType* iPos, const IndexType* iEnd, VertexLookupList& lookup, unsigned short submeshID);
-	void addIndexData(Ogre::IndexData* indexData, bool useSharedVertexLookup, unsigned short submeshID);
+	void addIndexData(IndexData* indexData, bool useSharedVertexLookup, unsigned short submeshID);
 
 	void computeCosts();
 	bool isBorderVertex(const PMVertex* vertex) const;
 	PMEdge* getPointer(VEdges::iterator it);
 	void computeVertexCollapseCost(PMVertex* vertex);
-	Ogre::Real computeEdgeCollapseCost(PMVertex* src, PMEdge* dstEdge);
+	Real computeEdgeCollapseCost(PMVertex* src, PMEdge* dstEdge);
 	virtual void bakeLods();
 	void collapse(PMVertex* vertex);
 	void initialize();
@@ -231,6 +231,4 @@ protected:
 };
 
 }
-}
-}
-#endif // ifndef PROGRESSIVEMESHGENERATOR_H
+#endif

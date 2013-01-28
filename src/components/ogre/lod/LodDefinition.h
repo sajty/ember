@@ -19,7 +19,7 @@
 #ifndef LODDEFINITION_H
 #define LODDEFINITION_H
 
-#include "ProgressiveMeshGenerator.h"
+#include <OgreProgressiveMeshGenerator.h>
 
 #include <OgreResource.h>
 
