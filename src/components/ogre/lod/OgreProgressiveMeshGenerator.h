@@ -66,7 +66,7 @@ protected:
 	// You can insert in O(1) time, if you know that it doesn't exists.
 	// You can remove in O(1) time, if you know the position of the item.
 	template<typename T, unsigned S>
-	struct VectorSet :
+	struct _OgrePrivate VectorSet :
 		public SmallVector<T, S> {
 		typedef typename SmallVector<T, S>::iterator iterator;
 
@@ -103,22 +103,22 @@ protected:
 	typedef std::vector<PMIndexBufferInfo> IndexBufferInfoList;
 
 	// Hash function for UniqueVertexSet.
-	struct PMVertexHash {
+	struct _OgrePrivate PMVertexHash {
 		size_t operator() (const PMVertex* v) const;
 	};
 
 	// Equality function for UniqueVertexSet.
-	struct PMVertexEqual {
+	struct _OgrePrivate PMVertexEqual {
 		bool operator() (const PMVertex* lhs, const PMVertex* rhs) const;
 	};
 
 	// Comparator for CollapseCostSet.
-	struct PMCollapseCostLess {
+	struct _OgrePrivate PMCollapseCostLess {
 		bool operator() (const PMVertex* lhs, const PMVertex* rhs) const;
 	};
 
 	// Directed edge
-	struct PMEdge {
+	struct _OgrePrivate PMEdge {
 		PMVertex* dst;
 		Real collapseCost;
 		int refCount;
@@ -130,9 +130,9 @@ protected:
 		bool operator< (const PMEdge& other) const;
 	};
 
-	struct PMVertex {
-		Vector3 position;
+	struct _OgrePrivate PMVertex {
 		Real collapseCost;
+		Vector3 position;
 		VEdges edges;
 		VTriangles triangles; // Triangle ID set, which are using this vertex.
 
@@ -141,7 +141,7 @@ protected:
 		CollapseCostSet::iterator costSetPosition; // Iterator pointing to the position in the mCollapseCostSet, which allows fast remove.
 	};
 
-	struct PMTriangle {
+	struct _OgrePrivate PMTriangle {
 		PMVertex* vertex[3];
 		Vector3 normal;
 		bool isRemoved;
@@ -154,17 +154,17 @@ protected:
 		bool isMalformed();
 	};
 
-	struct PMIndexBufferInfo {
+	struct _OgrePrivate PMIndexBufferInfo {
 		size_t indexSize;
 		size_t indexCount;
 	};
 
-	union IndexBufferPointer {
+	union _OgrePrivate IndexBufferPointer {
 		unsigned short* pshort;
 		unsigned int* pint;
 	};
 
-	struct PMCollapsedEdge {
+	struct _OgrePrivate PMCollapsedEdge {
 		unsigned int srcID;
 		unsigned int dstID;
 		unsigned short submeshID;
