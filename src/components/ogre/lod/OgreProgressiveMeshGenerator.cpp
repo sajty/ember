@@ -54,7 +54,9 @@ namespace Ogre
 #define UNINITIALIZED_COLLAPSE_COST (std::numeric_limits<Real>::infinity())
 
 ProgressiveMeshGenerator::ProgressiveMeshGenerator() :
-	mMesh(nullptr), mMeshBoundingSphereRadius(0.0f), mCollapseCostLimit(NEVER_COLLAPSE_COST)
+	mMesh(NULL), mMeshBoundingSphereRadius(0.0f), mCollapseCostLimit(NEVER_COLLAPSE_COST),
+	mUniqueVertexSet((UniqueVertexSet::size_type) 0, (const UniqueVertexSet::hasher&) PMVertexHash(this))
+
 {
 	assert(NEVER_COLLAPSE_COST < UNINITIALIZED_COLLAPSE_COST && NEVER_COLLAPSE_COST != UNINITIALIZED_COLLAPSE_COST);
 
@@ -86,7 +88,7 @@ void ProgressiveMeshGenerator::tuneContainerSize()
 	}
 
 	// Tune containers:
-	mUniqueVertexSet.rehash(2 * vertexCount); // less then 0.5 item/bucket for low collision rate
+	mUniqueVertexSet.rehash(4 * vertexCount); // less then 0.25 item/bucket for low collision rate
 
 	// There are less triangles then 2 * vertexCount. Except if there are bunch of triangles,
 	// where all vertices have the same position, but that would not make much sense.
@@ -1081,10 +1083,12 @@ bool ProgressiveMeshGenerator::PMCollapseCostLess::operator() (const PMVertex* l
 
 size_t ProgressiveMeshGenerator::PMVertexHash::operator() (const PMVertex* v) const
 {
-	boost::hash<Real> hasher;
-	return hasher(v->position.x)
-	       ^ hasher(v->position.y)
-	       ^ hasher(v->position.z);
+	// Stretch the values to an integer grid.
+	Real stretch = (Real)0x7fffffff / mGen->mMeshBoundingSphereRadius;
+	int hash = (int)(v->position.x * stretch);
+	hash ^= (int)(v->position.y * stretch) * 0x100;
+	hash ^= (int)(v->position.z * stretch) * 0x10000;
+	return (size_t)hash;
 }
 
 template<typename T, unsigned S>

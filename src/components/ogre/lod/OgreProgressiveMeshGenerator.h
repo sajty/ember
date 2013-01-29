@@ -104,6 +104,10 @@ protected:
 
 	// Hash function for UniqueVertexSet.
 	struct _OgrePrivate PMVertexHash {
+		ProgressiveMeshGenerator* mGen;
+
+		PMVertexHash() { assert(0); }
+		PMVertexHash(ProgressiveMeshGenerator* gen) { mGen = gen; }
 		size_t operator() (const PMVertex* v) const;
 	};
 
