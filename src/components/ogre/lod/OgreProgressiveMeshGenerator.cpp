@@ -480,7 +480,6 @@ Real ProgressiveMeshGenerator::computeEdgeCollapseCost(PMVertex* src, PMEdge* ds
 				Vector3 e2 = pv2->position - pv1->position;
 
 				Vector3 newNormal = e1.crossProduct(e2);
-				newNormal.normalise();
 
 				// Dot old and new face normal
 				// If < 0 then more than 90 degree difference
@@ -513,7 +512,7 @@ Real ProgressiveMeshGenerator::computeEdgeCollapseCost(PMVertex* src, PMEdge* ds
 			// Find the only triangle using this edge.
 			// PMTriangle* triangle = findSideTriangle(src, dst);
 
-			cost = 0.0f;
+			cost = -1.0f;
 			Vector3 collapseEdge = src->position - dst->position;
 			collapseEdge.normalise();
 			VEdges::iterator it = src->edges.begin();
@@ -526,11 +525,11 @@ Real ProgressiveMeshGenerator::computeEdgeCollapseCost(PMVertex* src, PMEdge* ds
 					// This time, the nearer the dot is to -1, the better, because that means
 					// the edges are opposite each other, therefore less kinkiness
 					// Scale into [0..1]
-					Real kinkiness = (otherBorderEdge.dotProduct(collapseEdge) + 1.002f) * 0.5f;
+					Real kinkiness = otherBorderEdge.dotProduct(collapseEdge);
 					cost = std::max(cost, kinkiness);
-
 				}
 			}
+			cost = (1.001f + cost) * 0.5f;
 		}
 	} else { // not a border
 
@@ -539,11 +538,11 @@ Real ProgressiveMeshGenerator::computeEdgeCollapseCost(PMVertex* src, PMEdge* ds
 		// use the triangle facing most away from the sides
 		// to determine our curvature term
 		// Iterate over src's faces again
-		cost = 0.001f;
+		cost = 1.0f;
 		VTriangles::iterator it = src->triangles.begin();
 		VTriangles::iterator itEnd = src->triangles.end();
 		for (; it != itEnd; it++) {
-			Real mincurv = 1.0f; // curve for face i and closer side to it
+			Real mincurv = -1.0f; // curve for face i and closer side to it
 			PMTriangle* triangle = *it;
 			VTriangles::iterator it2 = src->triangles.begin();
 			for (; it2 != itEnd; it2++) {
@@ -554,11 +553,12 @@ Real ProgressiveMeshGenerator::computeEdgeCollapseCost(PMVertex* src, PMEdge* ds
 					Real dotprod = triangle->normal.dotProduct(triangle2->normal);
 					// NB we do (1-..) to invert curvature where 1 is high curvature [0..1]
 					// Whilst dot product is high when angle difference is low
-					mincurv = std::min(mincurv, (1.002f - dotprod) * 0.5f);
+					mincurv = std::max(mincurv, dotprod);
 				}
 			}
-			cost = std::max(cost, mincurv);
+			cost = std::min(cost, mincurv);
 		}
+		cost = (1.001f - cost) * 0.5f;
 	}
 
 	// check for texture seam ripping and multiple submeshes
