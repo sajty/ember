@@ -32,8 +32,13 @@
  * by Stan Melax (c) 1998
  */
 
-// Optimize for best output instead of performance. Use OGRE_DOUBLE_PRECISION for even better results.
+// Optimize for best output.
 // #define PM_BEST_QUALITY
+
+// Optimize for best performance.
+// #define PM_WORST_QUALITY
+
+// Disable assertations.
 // #define NDEBUG
 
 #include "EmberOgreMesh.h"
@@ -449,12 +454,8 @@ Real ProgressiveMeshGenerator::computeEdgeCollapseCost(PMVertex* src, PMEdge* ds
 
 	PMVertex* dst = dstEdge->dst;
 
-	// Check for singular triangle destruction
-	// If src and dest both only have 1 triangle (and it must be a shared one)
-	// then this would destroy the shape, so don't do this
-	if (src->triangles.size() == 1 && dst->triangles.size() == 1) {
-		return NEVER_COLLAPSE_COST;
-	}
+#ifndef PM_WORST_QUALITY
+	// 25% overall speedup if disabled.
 
 	// Degenerate case check
 	// Are we going to invert a face normal of one of the neighbouring faces?
@@ -490,6 +491,7 @@ Real ProgressiveMeshGenerator::computeEdgeCollapseCost(PMVertex* src, PMEdge* ds
 			}
 		}
 	}
+#endif
 
 	Real cost;
 
