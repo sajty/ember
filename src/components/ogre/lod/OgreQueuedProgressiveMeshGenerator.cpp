@@ -279,12 +279,12 @@ void PMWorker::bakeLods()
 }
 
 
-PMInjector::PMInjector()
+PMInjector::PMInjector() :
+	mInjectorListener(0)
 {
 	WorkQueue* wq = Root::getSingleton().getWorkQueue();
 	unsigned short workQueueChannel = wq->getChannel("PMGen");
 	wq->addResponseHandler(workQueueChannel, this);
-	Root::getSingleton().addFrameListener(this);
 }
 
 PMInjector::~PMInjector()
@@ -295,7 +295,6 @@ PMInjector::~PMInjector()
 		if (wq) {
 			unsigned short workQueueChannel = wq->getChannel("PMGen");
 			wq->removeResponseHandler(workQueueChannel, this);
-			root->removeFrameListener(this);
 		}
 	}
 }
@@ -303,20 +302,14 @@ PMInjector::~PMInjector()
 void PMInjector::handleResponse(const WorkQueue::Response* res, const WorkQueue* srcQ)
 {
 	PMGenRequest* request = any_cast<PMGenRequest*>(res->getData());
-	OGRE_LOCK_MUTEX(this->OGRE_AUTO_MUTEX_NAME);
-	readyLods.push_back(request);
-}
-
-bool PMInjector::frameStarted(const FrameEvent& evt)
-{
-	OGRE_LOCK_MUTEX(this->OGRE_AUTO_MUTEX_NAME);
-	while (!readyLods.empty()) {
-		PMGenRequest* request = readyLods.back();
+	if(!mInjectorListener){
 		inject(request);
-		delete request;
-		readyLods.pop_back();
+	} else {
+		if(mInjectorListener->shouldInject(request)) {
+			inject(request);
+			mInjectorListener->injectionCompleted(request);
+		}
 	}
-	return true;
 }
 
 void PMInjector::inject(PMGenRequest* request)

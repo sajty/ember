@@ -70,7 +70,7 @@ struct PMGenRequest {
 /**
  * @brief Processes requests.
  */
-class PMWorker :
+class _OgreExport PMWorker :
 	private WorkQueue::RequestHandler,
 	private ProgressiveMeshGenerator
 {
@@ -90,38 +90,41 @@ private:
 	void bakeLods();
 };
 
+class _OgreExport PMInjectorListener
+{
+public:
+	PMInjectorListener(){}
+	virtual ~PMInjectorListener(){}
+	virtual bool shouldInject(PMGenRequest* request){ return true; }
+	virtual void injectionCompleted(PMGenRequest* request){}
+};
+
 /**
  * @brief Injects the output of a request to the mesh in a thread safe way.
  */
-class PMInjector :
-	public WorkQueue::ResponseHandler,
-	public FrameListener
+class _OgreExport PMInjector :
+	public WorkQueue::ResponseHandler
 {
 public:
 	PMInjector();
 	virtual ~PMInjector();
 
-	/**
-	 * @brief It will add every generated Lod to readyLods for injection, because this is not called on main thread.
-	 */
 	void handleResponse(const WorkQueue::Response* res, const WorkQueue* srcQ);
+
+	void setInjectorListener(PMInjectorListener* injectorListener) {mInjectorListener = injectorListener;}
+	void removeInjectorListener() {mInjectorListener = 0;}
 protected:
-	OGRE_AUTO_MUTEX; // Mutex for readyLods access.
-
-	std::vector<PMGenRequest*> readyLods;
-
-	// Overloaded function, called every frame by Ogre on main thread.
-	// This will call inject on each ready Lod.
-	bool frameStarted(const FrameEvent& evt);
 
 	// Copies every generated Lod level to the mesh.
 	void inject(PMGenRequest* request);
+
+	PMInjectorListener* mInjectorListener;
 };
 
 /**
  * @brief Creates a request for the worker. The interface is compatible with ProgressiveMeshGenerator.
  */
-class QueuedProgressiveMeshGenerator
+class _OgreExport QueuedProgressiveMeshGenerator
 {
 public:
 	void build(LodConfig& lodConfig);
