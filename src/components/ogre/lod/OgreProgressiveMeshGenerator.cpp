@@ -133,10 +133,10 @@ void ProgressiveMeshGenerator::PMTriangle::computeNormal()
 }
 void ProgressiveMeshGenerator::addVertexData(VertexData* vertexData, bool useSharedVertexLookup)
 {
-	if ((useSharedVertexLookup && !mSharedVertexLookup.empty()) // We already loaded the shared vertex buffer.
-	    || vertexData->vertexCount == 0) { // Locking a zero length buffer on linux with nvidia cards fails.
+	if ((useSharedVertexLookup && !mSharedVertexLookup.empty())) { // We already loaded the shared vertex buffer.
 		return;
 	}
+	assert(vertexData->vertexCount != 0);
 
 	// Locate position element and the buffer to go with it.
 	const VertexElement* elem = vertexData->vertexDeclaration->findElementBySemantic(VES_POSITION);
@@ -173,6 +173,7 @@ void ProgressiveMeshGenerator::addVertexData(VertexData* vertexData, bool useSha
 			v->seam = true;
 		} else {
 #ifndef NDEBUG
+			// Needed for an assert, don't remove it.
 			v->costSetPosition = mCollapseCostSet.end();
 #endif
 			v->seam = false;
@@ -896,7 +897,7 @@ size_t ProgressiveMeshGenerator::calcLodVertexCount(const LodLevel& lodConfig)
 	switch (lodConfig.reductionMethod) {
 	case LodLevel::VRM_PROPORTIONAL:
 		mCollapseCostLimit = NEVER_COLLAPSE_COST;
-		return uniqueVertices - (uniqueVertices * lodConfig.reductionValue);
+		return uniqueVertices - (size_t)((Real)uniqueVertices * lodConfig.reductionValue);
 
 	case LodLevel::VRM_CONSTANT:
 	{
@@ -929,22 +930,16 @@ void ProgressiveMeshGenerator::bakeLods()
 	for (unsigned short i = 0; i < submeshCount; i++) {
 		SubMesh::LODFaceList& lods = mMesh->getSubMesh(i)->mLodFaceList;
 		int indexCount = mIndexBufferInfoList[i].indexCount;
-		assert(indexCount > 0);
+		assert(indexCount >= 0);
 		lods.push_back(OGRE_NEW IndexData());
 		lods.back()->indexStart = 0;
 
 		if (indexCount == 0) {
-			//If the index is empty we need to create a "dummy" triangle, just to keep the index from beíng empty.
+			//If the index is empty we need to create a "dummy" triangle, just to keep the index buffer from being empty.
 			//The main reason for this is that the OpenGL render system will crash with a segfault unless the index has some values.
 			//This should hopefully be removed with future versions of Ogre. The most preferred solution would be to add the
 			//ability for a submesh to be excluded from rendering for a given LOD (which isn't possible currently 2012-12-09).
-
-			if (mMesh->getSubMesh(i)->vertexData || (mMesh->getSubMesh(i)->useSharedVertices && mMesh->sharedVertexData)) {
-				lods.back()->indexCount = 3;
-			} else {
-				//There's no vertex buffer and not much we can do.
-				lods.back()->indexCount = indexCount;
-			}
+			lods.back()->indexCount = 3;
 		} else {
 			lods.back()->indexCount = indexCount;
 		}
@@ -953,32 +948,15 @@ void ProgressiveMeshGenerator::bakeLods()
 			mIndexBufferInfoList[i].indexSize == 2 ?
 			HardwareIndexBuffer::IT_16BIT : HardwareIndexBuffer::IT_32BIT,
 			lods.back()->indexCount, HardwareBuffer::HBU_STATIC_WRITE_ONLY, false);
-		// Locking a zero length buffer on linux with nvidia cards fails, so we need to wrap it.
-		if (mIndexBufferInfoList[i].indexSize == 2) {
-			indexBuffer.get()[i].pshort =
-				static_cast<unsigned short*>(lods.back()->indexBuffer->lock(0, lods.back()->indexBuffer->getSizeInBytes(),
-																			HardwareBuffer::HBL_DISCARD));
-		} else {
-			indexBuffer.get()[i].pint =
-				static_cast<unsigned int*>(lods.back()->indexBuffer->lock(0, lods.back()->indexBuffer->getSizeInBytes(),
-																			HardwareBuffer::HBL_DISCARD));
-		}
+
+		indexBuffer.get()[i].pshort =
+			static_cast<unsigned short*>(lods.back()->indexBuffer->lock(0, lods.back()->indexBuffer->getSizeInBytes(),
+			HardwareBuffer::HBL_DISCARD));
 
 		//Check if we should fill it with a "dummy" triangle.
 		if (indexCount == 0) {
-			if (mIndexBufferInfoList[i].indexSize == 2) {
-				for (int m = 0; m < 3; m++) {
-					*(indexBuffer.get()[i].pshort++) =
-					    static_cast<unsigned short>(0);
-				}
-			} else {
-				for (int m = 0; m < 3; m++) {
-					*(indexBuffer.get()[i].pint++) =
-					    static_cast<unsigned int>(0);
-				}
-			}
+			memset(indexBuffer.get()[i].pshort, 0, 3 * mIndexBufferInfoList[i].indexSize);
 		}
-
 	}
 
 	// Fill buffers.
@@ -1002,10 +980,8 @@ void ProgressiveMeshGenerator::bakeLods()
 
 	// Close buffers.
 	for (unsigned short i = 0; i < submeshCount; i++) {
-		if (mIndexBufferInfoList[mTriangleList[i].submeshID].indexCount) {
-			SubMesh::LODFaceList& lods = mMesh->getSubMesh(i)->mLodFaceList;
-			lods.back()->indexBuffer->unlock();
-		}
+		SubMesh::LODFaceList& lods = mMesh->getSubMesh(i)->mLodFaceList;
+		lods.back()->indexBuffer->unlock();
 	}
 }
 
