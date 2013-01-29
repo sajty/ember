@@ -615,7 +615,7 @@ void ProgressiveMeshGenerator::updateVertexCollapseCost(PMVertex* vertex)
 			vertex->costSetPosition = mCollapseCostSet.insert(vertex);
 		} else {
 #ifndef NDEBUG
-			vertex->collapseTo == NULL;
+			vertex->collapseTo = NULL;
 			vertex->costSetPosition = mCollapseCostSet.end();
 #endif
 		}
@@ -637,8 +637,8 @@ void ProgressiveMeshGenerator::build(LodConfig& lodConfig)
 	for (size_t i = 0; i < lodConfig.levels.size(); i++) {
 		values.push_back(lodConfig.levels[i].distance);
 	}
-	mMesh->getLodStrategy()->assertSorted(values);
-#endif // if ifndef NDEBUG
+	lodConfig.mesh->getLodStrategy()->assertSorted(values);
+#endif
 	mMesh = lodConfig.mesh;
 	mMeshBoundingSphereRadius = mMesh->getBoundingSphereRadius();
 	mMesh->removeLodLevels();
