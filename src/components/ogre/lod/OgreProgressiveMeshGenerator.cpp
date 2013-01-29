@@ -107,7 +107,9 @@ void ProgressiveMeshGenerator::tuneContainerSize()
 
 void ProgressiveMeshGenerator::initialize()
 {
+#ifndef NDEBUG
 	mMeshName = mMesh->getName();
+#endif
 	unsigned short submeshCount = mMesh->getNumSubMeshes();
 	for (unsigned short i = 0; i < submeshCount; ++i) {
 		const SubMesh* submesh = mMesh->getSubMesh(i);
@@ -203,12 +205,14 @@ void ProgressiveMeshGenerator::addIndexDataImpl(IndexType* iPos, const IndexType
 			tri->vertex[i] = lookup[iPos[i]];
 		}
 		if (tri->isMalformed()) {
+#ifndef NDEBUG
 			std::stringstream str;
 			str << "In " << mMeshName << " malformed triangle found with ID: " << getTriangleID(tri) << ". " <<
 			std::endl;
 			printTriangle(tri, str);
 			str << "It will be excluded from Lod level calculations.";
-			S_LOG_VERBOSE(str.str());
+			LogManager::getSingleton().stream() << str;
+#endif
 			tri->isRemoved = true;
 			mIndexBufferInfoList[tri->submeshID].indexCount -= 3;
 			continue;
@@ -353,14 +357,16 @@ void ProgressiveMeshGenerator::addTriangleToEdges(PMTriangle* triangle)
 #ifdef PM_BEST_QUALITY
 	PMTriangle* duplicate = isDuplicateTriangle(triangle);
 	if (duplicate != NULL) {
+#ifndef NDEBUG
 		std::stringstream str;
-		str << "In " << /*mMesh->getName() <<*/ " duplicate triangle found." << std::endl;
+		str << "In " << mMeshName << " duplicate triangle found." << std::endl;
 		str << "Triangle " << getTriangleID(triangle) << " positions:" << std::endl;
 		printTriangle(triangle, str);
 		str << "Triangle " << getTriangleID(duplicate) << " positions:" << std::endl;
 		printTriangle(duplicate, str);
 		str << "Triangle " << getTriangleID(triangle) << " will be excluded from Lod level calculations.";
-		S_LOG_WARNING(str.str());
+		LogManager::getSingleton().stream() << str;
+#endif
 		triangle->isRemoved = true;
 		mIndexBufferInfoList[triangle->submeshID].indexCount -= 3;
 		return;
@@ -416,18 +422,17 @@ void ProgressiveMeshGenerator::computeCosts()
 	VertexList::iterator itEnd = mVertexList.end();
 	for (; it != itEnd; it++) {
 		if (!it->edges.empty()) {
-			computeVertexCollapseCost(&*it);
 
+			computeVertexCollapseCost(&*it);
 		} else {
-			std::stringstream str;
-			str << "In " << mMeshName << " never used vertex found with ID: " << mCollapseCostSet.size() << "."
-			    << std::endl
+#ifndef NDEBUG
+			LogManager::getSingleton().stream() << "In " << mMeshName << " never used vertex found with ID: " << mCollapseCostSet.size() << ". "
 			    << "Vertex position: ("
 			    << it->position.x << ", "
 			    << it->position.y << ", "
-			    << it->position.z << ")" << std::endl
+			    << it->position.z << ") "
 			    << "It will be excluded from Lod level calculations.";
-			S_LOG_VERBOSE(str.str());
+#endif
 		}
 	}
 }

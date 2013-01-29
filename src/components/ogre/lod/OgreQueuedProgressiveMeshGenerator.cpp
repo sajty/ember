@@ -57,7 +57,7 @@ PMGenRequest::~PMGenRequest()
 
 
 PMWorker::PMWorker() :
-		mRequest(nullptr)
+		mRequest(0)
 {
 	WorkQueue* wq = Root::getSingleton().getWorkQueue();
 	unsigned short workQueueChannel = wq->getChannel("PMGen");
@@ -89,7 +89,9 @@ WorkQueue::Response* PMWorker::handleRequest(const WorkQueue::Request* req, cons
 
 void PMWorker::buildRequest(LodConfig& lodConfigs)
 {
+#ifndef NDEBUG
 	mMeshName = mRequest->meshName;
+#endif
 	mMeshBoundingSphereRadius = lodConfigs.mesh->getBoundingSphereRadius();
 	cleanupMemory();
 	tuneContainerSize();

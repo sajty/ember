@@ -185,12 +185,14 @@ protected:
 
 	MeshPtr mMesh;
 
+#ifndef NDEBUG
 	/**
 	 * @brief The name of the mesh being processed.
 	 *
 	 * This is separate from mMesh in order to allow for access from background threads.
 	 */
 	std::string mMeshName;
+#endif
 	Real mMeshBoundingSphereRadius;
 	Real mCollapseCostLimit;
 
