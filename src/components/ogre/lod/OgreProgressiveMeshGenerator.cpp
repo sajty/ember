@@ -834,6 +834,9 @@ void ProgressiveMeshGenerator::collapse(PMVertex* src)
 #endif
 		}
 	}
+	
+	dst->seam |= src->seam; // Inherit seam property
+
 #ifndef PM_BEST_QUALITY
 	VEdges::iterator it3 = src->edges.begin();
 	VEdges::iterator it3End = src->edges.end();
