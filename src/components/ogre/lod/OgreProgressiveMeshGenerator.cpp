@@ -457,6 +457,7 @@ void ProgressiveMeshGenerator::computeVertexCollapseCost(PMVertex* vertex)
 Real ProgressiveMeshGenerator::computeEdgeCollapseCost(PMVertex* src, PMEdge* dstEdge)
 {
 	// This is based on Ogre's collapse cost calculation algorithm.
+	// 65% of the time is spent in this function!
 
 	PMVertex* dst = dstEdge->dst;
 
@@ -537,7 +538,7 @@ Real ProgressiveMeshGenerator::computeEdgeCollapseCost(PMVertex* src, PMEdge* ds
 					cost = std::max(cost, kinkiness);
 				}
 			}
-			cost = (1.001f + cost) * 0.5f;
+			cost = (1.002f + cost) * 0.5f;
 		}
 	} else { // not a border
 
@@ -566,15 +567,41 @@ Real ProgressiveMeshGenerator::computeEdgeCollapseCost(PMVertex* src, PMEdge* ds
 			}
 			cost = std::min(cost, mincurv);
 		}
-		cost = (1.001f - cost) * 0.5f;
+		cost = (1.002f - cost) * 0.5f;
 	}
 
 	// check for texture seam ripping and multiple submeshes
 	if (src->seam) {
 		if (!dst->seam) {
-			cost *= 128;
+			cost = std::max(cost, (Real)0.05f);
+			cost *= 64;
 		} else {
-			cost *= 4;
+#ifdef PM_BEST_QUALITY
+			int seamNeighbors = 0;
+			PMVertex* otherSeam;
+			VEdges::iterator it = src->edges.begin();
+			VEdges::iterator itEnd = src->edges.end();
+			for (; it != itEnd; it++) {
+				PMVertex* neighbor = it->dst;
+				if(neighbor->seam) {
+					seamNeighbors++;
+					if(neighbor != dst){
+						otherSeam = neighbor;
+					}
+				}
+			}
+			if(seamNeighbors != 2 || (seamNeighbors == 2 && dst->edges.has(PMEdge(otherSeam)))) {
+				cost = std::max(cost, (Real)0.05f);
+				cost *= 64;
+			} else {
+				cost = std::max(cost, (Real)0.005f);
+				cost *= 8;
+			}
+#else
+			cost = std::max(cost, (Real)0.005f);
+			cost *= 8;
+#endif
+			
 		}
 	}
 
