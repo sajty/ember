@@ -566,14 +566,13 @@ Real ProgressiveMeshGenerator::computeEdgeCollapseCost(PMVertex* src, PMEdge* ds
 	// check for texture seam ripping and multiple submeshes
 	if (src->seam) {
 		if (!dst->seam) {
-			cost += mMeshBoundingSphereRadius;
+			cost *= 128;
 		} else {
-			cost += mMeshBoundingSphereRadius * 0.5;
+			cost *= 4;
 		}
 	}
 
 	assert(cost >= 0);
-	// TODO: use squared distance.
 	return cost * src->position.distance(dst->position);
 }
 
