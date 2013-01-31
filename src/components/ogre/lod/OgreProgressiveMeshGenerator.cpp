@@ -176,7 +176,7 @@ void ProgressiveMeshGenerator::addVertexData(VertexData* vertexData, bool useSha
 		} else {
 #ifndef NDEBUG
 			// Needed for an assert, don't remove it.
-			v->costSetPosition = mCollapseCostSet.end();
+			v->costHeapPosition = mCollapseCostHeap.end();
 #endif
 			v->seam = false;
 		}
@@ -417,7 +417,7 @@ ProgressiveMeshGenerator::PMEdge* ProgressiveMeshGenerator::getPointer(VEdges::i
 
 void ProgressiveMeshGenerator::computeCosts()
 {
-	mCollapseCostSet.clear();
+	mCollapseCostHeap.clear();
 	VertexList::iterator it = mVertexList.begin();
 	VertexList::iterator itEnd = mVertexList.end();
 	for (; it != itEnd; it++) {
@@ -426,7 +426,7 @@ void ProgressiveMeshGenerator::computeCosts()
 			computeVertexCollapseCost(&*it);
 		} else {
 #ifndef NDEBUG
-			LogManager::getSingleton().stream() << "In " << mMeshName << " never used vertex found with ID: " << mCollapseCostSet.size() << ". "
+			LogManager::getSingleton().stream() << "In " << mMeshName << " never used vertex found with ID: " << mCollapseCostHeap.size() << ". "
 			    << "Vertex position: ("
 			    << it->position.x << ", "
 			    << it->position.y << ", "
@@ -439,18 +439,18 @@ void ProgressiveMeshGenerator::computeCosts()
 
 void ProgressiveMeshGenerator::computeVertexCollapseCost(PMVertex* vertex)
 {
-	vertex->collapseCost = UNINITIALIZED_COLLAPSE_COST;
+	Real collapseCost = UNINITIALIZED_COLLAPSE_COST;
 	assert(!vertex->edges.empty());
 	VEdges::iterator it = vertex->edges.begin();
 	for (; it != vertex->edges.end(); it++) {
 		it->collapseCost = computeEdgeCollapseCost(vertex, getPointer(it));
-		if (vertex->collapseCost > it->collapseCost) {
-			vertex->collapseCost = it->collapseCost;
+		if (collapseCost > it->collapseCost) {
+			collapseCost = it->collapseCost;
 			vertex->collapseTo = it->dst;
 		}
 	}
-	assert(vertex->collapseCost != UNINITIALIZED_COLLAPSE_COST);
-	vertex->costSetPosition = mCollapseCostSet.insert(vertex);
+	assert(collapseCost != UNINITIALIZED_COLLAPSE_COST);
+	vertex->costHeapPosition = mCollapseCostHeap.insert(std::make_pair(collapseCost, vertex));
 
 }
 
@@ -641,18 +641,17 @@ void ProgressiveMeshGenerator::updateVertexCollapseCost(PMVertex* vertex)
 			collapseTo = it->dst;
 		}
 	}
-	if (collapseCost != vertex->collapseCost || vertex->collapseTo != collapseTo) {
+	if (vertex->collapseTo != collapseTo || collapseCost != vertex->costHeapPosition->first) {
 		assert(vertex->collapseTo != NULL);
-		assert(vertex->costSetPosition != mCollapseCostSet.end());
-		mCollapseCostSet.erase(vertex->costSetPosition);
+		assert(vertex->costHeapPosition != mCollapseCostHeap.end());
+		mCollapseCostHeap.erase(vertex->costHeapPosition);
 		if (collapseCost != UNINITIALIZED_COLLAPSE_COST) {
-			vertex->collapseCost = collapseCost;
 			vertex->collapseTo = collapseTo;
-			vertex->costSetPosition = mCollapseCostSet.insert(vertex);
+			vertex->costHeapPosition = mCollapseCostHeap.insert(std::make_pair(collapseCost, vertex));
 		} else {
 #ifndef NDEBUG
 			vertex->collapseTo = NULL;
-			vertex->costSetPosition = mCollapseCostSet.end();
+			vertex->costHeapPosition = mCollapseCostHeap.end();
 #endif
 		}
 	}
@@ -698,9 +697,9 @@ void ProgressiveMeshGenerator::computeLods(LodConfig& lodConfigs)
 	for (unsigned short curLod = 0; curLod < lodCount; curLod++) {
 		size_t neededVertexCount = calcLodVertexCount(lodConfigs.levels[curLod]);
 		for (; neededVertexCount < vertexCount; vertexCount--) {
-			CollapseCostSet::iterator nextIndex = mCollapseCostSet.begin();
-			if (nextIndex != mCollapseCostSet.end() && (*nextIndex)->collapseCost < mCollapseCostLimit) {
-				collapse(*nextIndex);
+			CollapseCostHeap::iterator nextVertex = mCollapseCostHeap.begin();
+			if (nextVertex != mCollapseCostHeap.end() && nextVertex->first < mCollapseCostLimit) {
+				collapse(nextVertex->second);
 			} else {
 				break;
 			}
@@ -753,11 +752,11 @@ void ProgressiveMeshGenerator::assertValidMesh()
 {
 	// Allows to find bugs in collapsing.
 	size_t s1 = mUniqueVertexSet.size();
-	size_t s2 = mCollapseCostSet.size();
-	CollapseCostSet::iterator it = mCollapseCostSet.begin();
-	CollapseCostSet::iterator itEnd = mCollapseCostSet.end();
+	size_t s2 = mCollapseCostHeap.size();
+	CollapseCostHeap::iterator it = mCollapseCostHeap.begin();
+	CollapseCostHeap::iterator itEnd = mCollapseCostHeap.end();
 	while (it != itEnd) {
-		assertValidVertex(*it);
+		assertValidVertex(it->second);
 		it++;
 	}
 }
@@ -771,7 +770,7 @@ void ProgressiveMeshGenerator::assertValidVertex(PMVertex* v)
 	for (; it != itEnd; it++) {
 		PMTriangle* t = *it;
 		for (int i = 0; i < 3; i++) {
-			assert(t->vertex[i]->costSetPosition != mCollapseCostSet.end());
+			assert(t->vertex[i]->costHeapPosition != mCollapseCostHeap.end());
 			t->vertex[i]->edges.findExists(PMEdge(t->vertex[i]->collapseTo));
 			for (int n = 0; n < 3; n++) {
 				if (i != n) {
@@ -793,8 +792,8 @@ void ProgressiveMeshGenerator::collapse(PMVertex* src)
 	assertValidVertex(dst);
 	assertValidVertex(src);
 #endif // ifndef NDEBUG
-	assert(src->collapseCost != NEVER_COLLAPSE_COST);
-	assert(src->collapseCost != UNINITIALIZED_COLLAPSE_COST);
+	assert(src->costHeapPosition->first != NEVER_COLLAPSE_COST);
+	assert(src->costHeapPosition->first != UNINITIALIZED_COLLAPSE_COST);
 	assert(!src->edges.empty());
 	assert(!src->triangles.empty());
 	assert(src->edges.find(PMEdge(dst)) != src->edges.end());
@@ -915,11 +914,11 @@ void ProgressiveMeshGenerator::collapse(PMVertex* src)
 	assertOutdatedCollapseCost(dst);
 #endif // ifndef NDEBUG
 #endif // ifndef PM_BEST_QUALITY
-	mCollapseCostSet.erase(src->costSetPosition); // Remove src from collapse costs.
+	mCollapseCostHeap.erase(src->costHeapPosition); // Remove src from collapse costs.
 	src->edges.clear(); // Free memory
 	src->triangles.clear(); // Free memory
 #ifndef NDEBUG
-	src->costSetPosition = mCollapseCostSet.end();
+	src->costHeapPosition = mCollapseCostHeap.end();
 	assertValidVertex(dst);
 #endif
 }
@@ -934,7 +933,7 @@ size_t ProgressiveMeshGenerator::calcLodVertexCount(const LodLevel& lodConfig)
 	case LodLevel::VRM_CONSTANT:
 	{
 		mCollapseCostLimit = NEVER_COLLAPSE_COST;
-		size_t reduction = lodConfig.reductionValue;
+		size_t reduction = (size_t) lodConfig.reductionValue;
 		if (reduction < uniqueVertices) {
 			return uniqueVertices - reduction;
 		} else {
@@ -1074,7 +1073,7 @@ void ProgressiveMeshGenerator::removeEdge(PMVertex* v, const PMEdge& edge)
 
 void ProgressiveMeshGenerator::cleanupMemory()
 {
-	this->mCollapseCostSet.clear();
+	this->mCollapseCostHeap.clear();
 	this->mIndexBufferInfoList.clear();
 	this->mSharedVertexLookup.clear();
 	this->mVertexLookup.clear();
@@ -1086,11 +1085,6 @@ void ProgressiveMeshGenerator::cleanupMemory()
 bool ProgressiveMeshGenerator::PMVertexEqual::operator() (const PMVertex* lhs, const PMVertex* rhs) const
 {
 	return lhs->position == rhs->position;
-}
-
-bool ProgressiveMeshGenerator::PMCollapseCostLess::operator() (const PMVertex* lhs, const PMVertex* rhs) const
-{
-	return lhs->collapseCost < rhs->collapseCost;
 }
 
 size_t ProgressiveMeshGenerator::PMVertexHash::operator() (const PMVertex* v) const

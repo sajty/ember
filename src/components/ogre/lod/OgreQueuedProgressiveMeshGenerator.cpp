@@ -180,7 +180,7 @@ void PMWorker::addVertexBuffer(const PMGenRequest::VertexBuffer& vertexBuffer, b
 			v->seam = true;
 		} else {
 #ifndef NDEBUG
-			v->costSetPosition = mCollapseCostSet.end();
+			v->costHeapPosition = mCollapseCostHeap.end();
 #endif
 			v->seam = false;
 		}

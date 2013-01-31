@@ -93,7 +93,7 @@ protected:
 	typedef std::vector<PMVertex> VertexList;
 	typedef std::vector<PMTriangle> TriangleList;
 	typedef boost::unordered_set<PMVertex*, PMVertexHash, PMVertexEqual> UniqueVertexSet;
-	typedef std::multiset<PMVertex*, PMCollapseCostLess> CollapseCostSet;
+	typedef std::multimap<Real, PMVertex*> CollapseCostHeap;
 	typedef std::vector<PMVertex*> VertexLookupList;
 
 	typedef VectorSet<PMEdge, 8> VEdges;
@@ -116,11 +116,6 @@ protected:
 		bool operator() (const PMVertex* lhs, const PMVertex* rhs) const;
 	};
 
-	// Comparator for CollapseCostSet.
-	struct _OgrePrivate PMCollapseCostLess {
-		bool operator() (const PMVertex* lhs, const PMVertex* rhs) const;
-	};
-
 	// Directed edge
 	struct _OgrePrivate PMEdge {
 		PMVertex* dst;
@@ -135,14 +130,13 @@ protected:
 	};
 
 	struct _OgrePrivate PMVertex {
-		Real collapseCost;
 		Vector3 position;
 		VEdges edges;
 		VTriangles triangles; // Triangle ID set, which are using this vertex.
 
 		PMVertex* collapseTo;
 		bool seam;
-		CollapseCostSet::iterator costSetPosition; // Iterator pointing to the position in the mCollapseCostSet, which allows fast remove.
+		CollapseCostHeap::iterator costHeapPosition; // Iterator pointing to the position in the mCollapseCostHeap, which allows fast remove.
 	};
 
 	struct _OgrePrivate PMTriangle {
@@ -179,7 +173,7 @@ protected:
 	VertexList mVertexList;
 	TriangleList mTriangleList;
 	UniqueVertexSet mUniqueVertexSet;
-	CollapseCostSet mCollapseCostSet;
+	CollapseCostHeap mCollapseCostHeap;
 	CollapsedEdges tmpCollapsedEdges; // Tmp container used in collapse().
 	IndexBufferInfoList mIndexBufferInfoList;
 
