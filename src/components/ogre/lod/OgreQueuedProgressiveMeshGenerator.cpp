@@ -26,8 +26,6 @@
  * -----------------------------------------------------------------------------
  */
 
-#include "EmberOgreMesh.h"
-
 #include "OgreStableHeaders.h"
 
 #include "OgreQueuedProgressiveMeshGenerator.h"
@@ -39,6 +37,9 @@
 
 namespace Ogre
 {
+
+template<> PMWorker* Singleton<PMWorker>::msSingleton = 0;
+template<> PMInjector* Singleton<PMInjector>::msSingleton = 0;
 
 PMGenRequest::~PMGenRequest()
 {
@@ -60,8 +61,8 @@ PMWorker::PMWorker() :
 		mRequest(0)
 {
 	WorkQueue* wq = Root::getSingleton().getWorkQueue();
-	unsigned short workQueueChannel = wq->getChannel("PMGen");
-	wq->addRequestHandler(workQueueChannel, this);
+	mChannelID = wq->getChannel("PMGen");
+	wq->addRequestHandler(mChannelID, this);
 }
 
 
@@ -71,16 +72,26 @@ PMWorker::~PMWorker()
 	if (root) {
 		WorkQueue* wq = root->getWorkQueue();
 		if (wq) {
-			unsigned short workQueueChannel = wq->getChannel("PMGen");
-			wq->removeRequestHandler(workQueueChannel, this);
+			wq->removeRequestHandler(mChannelID, this);
 		}
 	}
+}
+
+void PMWorker::addRequestToQueue( PMGenRequest* request )
+{
+	WorkQueue* wq = Root::getSingleton().getWorkQueue();
+	wq->addRequest(mChannelID, 0, Any(request),0,false,true);
+}
+
+void PMWorker::clearPendingLodRequests()
+{
+	Ogre::WorkQueue* wq = Root::getSingleton().getWorkQueue();
+	wq->abortPendingRequestsByChannel(mChannelID);
 }
 
 WorkQueue::Response* PMWorker::handleRequest(const WorkQueue::Request* req, const WorkQueue* srcQ)
 {
 	// Called on worker thread by WorkQueue.
-	OGRE_LOCK_MUTEX(this->OGRE_AUTO_MUTEX_NAME);
 	mRequest = any_cast<PMGenRequest*>(req->getData());
 	buildRequest(mRequest->config);
 	return OGRE_NEW WorkQueue::Response(req, true, req->getData());
@@ -278,7 +289,6 @@ void PMWorker::bakeLods()
 	}
 }
 
-
 PMInjector::PMInjector() :
 	mInjectorListener(0)
 {
@@ -347,7 +357,7 @@ void PMInjector::inject(PMGenRequest* request)
 }
 
 
-void QueuedProgressiveMeshGenerator::build(LodConfig& lodConfig)
+void QueuedProgressiveMeshGenerator::generateLodLevels(LodConfig& lodConfig)
 {
 #ifndef NDEBUG
 	// Do not call this with empty Lod.
@@ -361,16 +371,14 @@ void QueuedProgressiveMeshGenerator::build(LodConfig& lodConfig)
 	for (size_t i = 0; i < lodConfig.levels.size(); i++) {
 		values.push_back(lodConfig.levels[i].distance);
 	}
-	lodConfig.mesh->getLodStrategy()->assertSorted(values);
+	lodConfig.strategy->assertSorted(values);
 #endif // if ifndef NDEBUG
 
 	PMGenRequest* req = new PMGenRequest();
 	req->meshName = lodConfig.mesh->getName();
 	req->config = lodConfig;
 	copyBuffers(lodConfig.mesh.get(), req);
-	WorkQueue* wq = Root::getSingleton().getWorkQueue();
-	unsigned short workQueueChannel = wq->getChannel("PMGen");
-	wq->addRequest(workQueueChannel, 0, Any(req));
+	PMWorker::getSingleton().addRequestToQueue(req);
 }
 
 void QueuedProgressiveMeshGenerator::copyVertexBuffer(VertexData* data, PMGenRequest::VertexBuffer& out)

@@ -71,15 +71,19 @@ struct PMGenRequest {
  * @brief Processes requests.
  */
 class _OgreExport PMWorker :
+	public Singleton<PMWorker>,
 	private WorkQueue::RequestHandler,
-	private ProgressiveMeshGenerator
+	private ProgressiveMeshGenerator,
+	public LodAlloc
 {
 public:
 	PMWorker();
 	virtual ~PMWorker();
+	void addRequestToQueue(PMGenRequest* request);
+	void clearPendingLodRequests();
 private:
-	OGRE_AUTO_MUTEX; // Mutex to force processing one mesh at a time.
 	PMGenRequest* mRequest; // This is a copy of the current processed request from stack. This is needed to pass it to overloaded functions like bakeLods().
+	ushort mChannelID;
 
 	WorkQueue::Response* handleRequest(const WorkQueue::Request* req, const WorkQueue* srcQ);
 	void buildRequest(LodConfig& lodConfigs);
@@ -95,15 +99,17 @@ class _OgreExport PMInjectorListener
 public:
 	PMInjectorListener(){}
 	virtual ~PMInjectorListener(){}
-	virtual bool shouldInject(PMGenRequest* request){ return true; }
-	virtual void injectionCompleted(PMGenRequest* request){}
+	virtual bool shouldInject(PMGenRequest* request) = 0;
+	virtual void injectionCompleted(PMGenRequest* request) = 0;
 };
 
 /**
  * @brief Injects the output of a request to the mesh in a thread safe way.
  */
 class _OgreExport PMInjector :
-	public WorkQueue::ResponseHandler
+	public Singleton<PMInjector>,
+	public WorkQueue::ResponseHandler,
+	public LodAlloc
 {
 public:
 	PMInjector();
@@ -124,11 +130,16 @@ protected:
 /**
  * @brief Creates a request for the worker. The interface is compatible with ProgressiveMeshGenerator.
  */
-class _OgreExport QueuedProgressiveMeshGenerator
+class _OgreExport QueuedProgressiveMeshGenerator :
+	public ProgressiveMeshGeneratorBase
 {
 public:
-	void build(LodConfig& lodConfig);
+
+	/// @copydoc ProgressiveMeshGeneratorBase::generateLodLevels
+	void generateLodLevels(LodConfig& lodConfig);
+
 	virtual ~QueuedProgressiveMeshGenerator();
+
 private:
 	void copyVertexBuffer(VertexData* data, PMGenRequest::VertexBuffer& out);
 	void copyIndexBuffer(IndexData* data, PMGenRequest::IndexBuffer& out);

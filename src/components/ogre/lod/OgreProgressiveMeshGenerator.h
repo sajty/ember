@@ -35,30 +35,51 @@
 #include "OgreMesh.h"
 #include "OgreLodConfig.h"
 
-#include <boost/unordered_set.hpp>
-
 namespace Ogre
 {
+
+class _OgreExport ProgressiveMeshGeneratorBase
+{
+public:
+	/**
+	 * @brief Generates the Lod levels for a mesh.
+	 * 
+	 * @param lodConfig Specification of the requested Lod levels.
+	 */
+	virtual void generateLodLevels(LodConfig& lodConfig) = 0;
+
+	/**
+	 * @brief Generates the Lod levels for a mesh without configuring it.
+	 *
+	 * @param mesh Generate the Lod for this mesh.
+	 */
+	virtual void generateAutoconfiguredLodLevels(MeshPtr& mesh);
+
+	/**
+	 * @brief Fills Lod Config with a config, which works on any mesh.
+	 *
+	 * @param inMesh Optimize for this mesh.
+	 * @param outLodConfig Lod configuration storing the output.
+	 */
+	virtual void getAutoconfig(MeshPtr& inMesh, LodConfig& outLodConfig);
+
+	virtual ~ProgressiveMeshGeneratorBase() { }
+};
 
 /**
  * @brief Improved version of ProgressiveMesh.
  */
-class _OgreExport ProgressiveMeshGenerator
+class _OgreExport ProgressiveMeshGenerator :
+	public ProgressiveMeshGeneratorBase
 {
 public:
 
-	/**
-	 * @brief Ctor.
-	 */
 	ProgressiveMeshGenerator();
 	virtual ~ProgressiveMeshGenerator();
 
-	/**
-	 * @brief Builds the Lod levels for a submesh based on a LodConfigList.
-	 *
-	 * @param lodConfigs Specification of the requested Lod levels.
-	 */
-	void build(LodConfig& lodConfigs);
+	/// @copydoc ProgressiveMeshGeneratorBase::generateLodLevels
+	void generateLodLevels(LodConfig& lodConfig);
+
 protected:
 
 	// VectorSet is basically a helper to use a vector as a small set container.
@@ -90,17 +111,17 @@ protected:
 	struct PMCollapsedEdge;
 	struct PMIndexBufferInfo;
 
-	typedef std::vector<PMVertex> VertexList;
-	typedef std::vector<PMTriangle> TriangleList;
-	typedef boost::unordered_set<PMVertex*, PMVertexHash, PMVertexEqual> UniqueVertexSet;
-	typedef std::multimap<Real, PMVertex*> CollapseCostHeap;
-	typedef std::vector<PMVertex*> VertexLookupList;
+	typedef vector<PMVertex>::type VertexList;
+	typedef vector<PMTriangle>::type TriangleList;
+	typedef HashSet<PMVertex*, PMVertexHash, PMVertexEqual> UniqueVertexSet;
+	typedef multimap<Real, PMVertex*>::type CollapseCostHeap;
+	typedef vector<PMVertex*>::type VertexLookupList;
 
 	typedef VectorSet<PMEdge, 8> VEdges;
 	typedef VectorSet<PMTriangle*, 7> VTriangles;
 
-	typedef std::vector<PMCollapsedEdge> CollapsedEdges;
-	typedef std::vector<PMIndexBufferInfo> IndexBufferInfoList;
+	typedef vector<PMCollapsedEdge>::type CollapsedEdges;
+	typedef vector<PMIndexBufferInfo>::type IndexBufferInfoList;
 
 	// Hash function for UniqueVertexSet.
 	struct _OgrePrivate PMVertexHash {
@@ -136,7 +157,7 @@ protected:
 
 		PMVertex* collapseTo;
 		bool seam;
-		CollapseCostHeap::iterator costHeapPosition; // Iterator pointing to the position in the mCollapseCostHeap, which allows fast remove.
+		CollapseCostHeap::iterator costHeapPosition; // Iterator pointing to the position in the mCollapseCostSet, which allows fast remove.
 	};
 
 	struct _OgrePrivate PMTriangle {
@@ -185,7 +206,7 @@ protected:
 	 *
 	 * This is separate from mMesh in order to allow for access from background threads.
 	 */
-	std::string mMeshName;
+	String mMeshName;
 #endif
 	Real mMeshBoundingSphereRadius;
 	Real mCollapseCostLimit;
@@ -222,7 +243,7 @@ protected:
 	void removeTriangleFromEdges(PMTriangle* triangle, PMVertex* skip = NULL);
 	void addEdge(PMVertex* v, const PMEdge& edge);
 	void removeEdge(PMVertex* v, const PMEdge& edge);
-	void printTriangle(PMTriangle* triangle, std::stringstream& str);
+	void printTriangle(PMTriangle* triangle, stringstream& str);
 	PMTriangle* findSideTriangle(const PMVertex* v1, const PMVertex* v2);
 	bool isDuplicateTriangle(PMTriangle* triangle, PMTriangle* triangle2);
 	PMTriangle* isDuplicateTriangle(PMTriangle* triangle);
