@@ -30,16 +30,17 @@
 
 #include "OgreQueuedProgressiveMeshGenerator.h"
 
+#include "EmberOgreMesh.h"
+
 #include "OgreSubMesh.h"
 #include "OgreHardwareBufferManager.h"
 #include "OgreRoot.h"
 
+template<> Ogre::PMWorker* Ember::Singleton<Ogre::PMWorker>::ms_Singleton = 0;
+template<> Ogre::PMInjector* Ember::Singleton<Ogre::PMInjector>::ms_Singleton = 0;
 
 namespace Ogre
 {
-
-template<> PMWorker* Singleton<PMWorker>::msSingleton = 0;
-template<> PMInjector* Singleton<PMInjector>::msSingleton = 0;
 
 PMGenRequest::~PMGenRequest()
 {
@@ -80,18 +81,21 @@ PMWorker::~PMWorker()
 void PMWorker::addRequestToQueue( PMGenRequest* request )
 {
 	WorkQueue* wq = Root::getSingleton().getWorkQueue();
-	wq->addRequest(mChannelID, 0, Any(request),0,false,true);
+	wq->addRequest(mChannelID, 0, Any(request));
 }
 
 void PMWorker::clearPendingLodRequests()
 {
-	Ogre::WorkQueue* wq = Root::getSingleton().getWorkQueue();
-	wq->abortPendingRequestsByChannel(mChannelID);
+	// Not implemented
+	assert(0);
+	// Ogre::WorkQueue* wq = Root::getSingleton().getWorkQueue();
+	// wq->abortPendingRequestsByChannel(mChannelID);
 }
 
 WorkQueue::Response* PMWorker::handleRequest(const WorkQueue::Request* req, const WorkQueue* srcQ)
 {
 	// Called on worker thread by WorkQueue.
+	OGRE_LOCK_MUTEX(this->OGRE_AUTO_MUTEX_NAME);
 	mRequest = any_cast<PMGenRequest*>(req->getData());
 	buildRequest(mRequest->config);
 	return OGRE_NEW WorkQueue::Response(req, true, req->getData());

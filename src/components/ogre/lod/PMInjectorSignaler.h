@@ -19,7 +19,7 @@
 #ifndef PMINJECTORSIGNALER_H
 #define PMINJECTORSIGNALER_H
 
-#include <OgreQueuedProgressiveMeshGenerator.h>
+#include "OgreQueuedProgressiveMeshGenerator.h"
 #include "components/ogre/EmberOgrePrerequisites.h"
 #include "framework/Singleton.h"
 #include <sigc++/signal.h>
@@ -36,12 +36,13 @@ namespace Lod
  */
 class PMInjectorSignaler :
 	public Ember::Singleton<PMInjectorSignaler>,
-	public PMInjector
+	public Ogre::PMInjectorListener
 {
 public:
-	sigc::signal<void, LodConfig*> LodInjected;
+	sigc::signal<void, Ogre::LodConfig*> LodInjected;
 
-	bool frameStarted(const Ogre::FrameEvent& evt);
+	virtual bool shouldInject(Ogre::PMGenRequest* request);
+	virtual void injectionCompleted(Ogre::PMGenRequest* request);
 };
 
 }

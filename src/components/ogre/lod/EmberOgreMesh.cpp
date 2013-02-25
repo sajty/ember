@@ -45,34 +45,35 @@ EmberOgreMesh::EmberOgreMesh(Ogre::ResourceManager* creator,
 	S_LOG_VERBOSE("Loading mesh " << name << ".");
 }
 
-void EmberOgreMesh::_configureMeshLodUsage(const LodConfig& lodConfigs)
+void EmberOgreMesh::_configureMeshLodUsage(const Ogre::LodConfig& lodConfig)
 {
 	// In theory every mesh should have a submesh.
 	assert(getNumSubMeshes() > 0);
+	setLodStrategy(lodConfig.strategy);
 	Ogre::SubMesh* submesh = getSubMesh(0);
 	mNumLods = submesh->mLodFaceList.size() + 1;
 	mMeshLodUsageList.resize(mNumLods);
-	for (size_t n = 0, i = 0; i < lodConfigs.levels.size(); i++) {
+	for (size_t n = 0, i = 0; i < lodConfig.levels.size(); i++) {
 		// Record usages. First Lod usage is the mesh itself.
 
 		// Skip lods, which have the same amount of vertices. No buffer generated for them.
-		if (!lodConfigs.levels[i].outSkipped) {
-
+		if (!lodConfig.levels[i].outSkipped) {
 			// Generated buffers are less then the reported by ProgressiveMesh.
 			// This would fail if you use QueuedProgressiveMesh and the MeshPtr is force unloaded before lod generation completes.
 			assert(mMeshLodUsageList.size() > n + 1);
 			Ogre::MeshLodUsage& lod = mMeshLodUsageList[++n];
-			lod.userValue = lodConfigs.levels[i].distance;
+			lod.userValue = lodConfig.levels[i].distance;
 			lod.value = getLodStrategy()->transformUserValue(lod.userValue);
 			lod.edgeData = 0;
 			lod.manualMesh.setNull();
 		}
 	}
 
+	// TODO: Fix this in PixelCountLodStrategy::getIndex()
 	// Fix bug in Ogre with pixel count Lod strategy.
 	// Changes [0, 20, 15, 10, 5] to [max, 20, 15, 10, 5].
 	// Fixes PixelCountLodStrategy::getIndex() function, which returned always 0 index.
-	if (getLodStrategy() == Ogre::PixelCountLodStrategy::getSingletonPtr()) {
+	if (lodConfig.strategy == Ogre::PixelCountLodStrategy::getSingletonPtr()) {
 		mMeshLodUsageList[0].userValue = std::numeric_limits<Ogre::Real>::max();
 		mMeshLodUsageList[0].value = std::numeric_limits<Ogre::Real>::max();
 	} else {

@@ -15,12 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
-namespace Ember
-{
-namespace OgreView
-{
-namespace Lod
+namespace Ogre
 {
 
 class LodLevel
@@ -57,6 +52,16 @@ public:
 	};
 };
 
+}
+
+namespace Ember
+{
+namespace OgreView
+{
+namespace Lod
+{
+
+
 /**
  * @brief Lod Distance config container.
  */
@@ -77,12 +82,12 @@ public:
 	/**
 	 * @brief Returns the vertex reduction method of the Lod Distance, which is used in automatic vertex reduction.
 	 */
-	Ember::OgreView::Lod::LodLevel::VertexReductionMethod getReductionMethod() const;
+	Ogre::LodLevel::VertexReductionMethod getReductionMethod() const;
 
 	/**
 	 * @brief Sets the vertex reduction method of the Lod Distance, which is used in automatic vertex reduction.
 	 */
-	void setReductionMethod(Ember::OgreView::Lod::LodLevel::VertexReductionMethod reductionMethod);
+	void setReductionMethod(Ogre::LodLevel::VertexReductionMethod reductionMethod);
 
 	/**
 	 * @brief Returns the vertex reduction value of the Lod Distance, which is used in automatic vertex reduction.

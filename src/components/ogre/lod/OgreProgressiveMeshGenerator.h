@@ -38,7 +38,7 @@
 namespace Ogre
 {
 
-class _OgreExport ProgressiveMeshGeneratorBase
+class ProgressiveMeshGeneratorBase
 {
 public:
 	/**
@@ -69,7 +69,7 @@ public:
 /**
  * @brief Improved version of ProgressiveMesh.
  */
-class _OgreExport ProgressiveMeshGenerator :
+class ProgressiveMeshGenerator :
 	public ProgressiveMeshGeneratorBase
 {
 public:

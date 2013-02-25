@@ -30,7 +30,7 @@
 #define __QueuedProgressiveMeshGenerator_H_
 
 #include "OgreProgressiveMeshGenerator.h"
-#include "OgreSingleton.h"
+#include "framework/Singleton.h" // Ember singleton
 #include "OgreWorkQueue.h"
 #include "OgreFrameListener.h"
 
@@ -70,11 +70,10 @@ struct PMGenRequest {
 /**
  * @brief Processes requests.
  */
-class _OgreExport PMWorker :
-	public Singleton<PMWorker>,
+class PMWorker :
+	public Ember::Singleton<PMWorker>,
 	private WorkQueue::RequestHandler,
-	private ProgressiveMeshGenerator,
-	public LodAlloc
+	private ProgressiveMeshGenerator
 {
 public:
 	PMWorker();
@@ -82,7 +81,8 @@ public:
 	void addRequestToQueue(PMGenRequest* request);
 	void clearPendingLodRequests();
 private:
-	PMGenRequest* mRequest; // This is a copy of the current processed request from stack. This is needed to pass it to overloaded functions like bakeLods().
+	OGRE_AUTO_MUTEX;
+	PMGenRequest* mRequest; // This is a copy of the current procesesd request from stack. This is needed to pass it to overloaded functions like bakeLods().
 	ushort mChannelID;
 
 	WorkQueue::Response* handleRequest(const WorkQueue::Request* req, const WorkQueue* srcQ);
@@ -94,7 +94,7 @@ private:
 	void bakeLods();
 };
 
-class _OgreExport PMInjectorListener
+class PMInjectorListener
 {
 public:
 	PMInjectorListener(){}
@@ -106,10 +106,9 @@ public:
 /**
  * @brief Injects the output of a request to the mesh in a thread safe way.
  */
-class _OgreExport PMInjector :
-	public Singleton<PMInjector>,
-	public WorkQueue::ResponseHandler,
-	public LodAlloc
+class PMInjector :
+	public Ember::Singleton<PMInjector>,
+	public WorkQueue::ResponseHandler
 {
 public:
 	PMInjector();
@@ -130,7 +129,7 @@ protected:
 /**
  * @brief Creates a request for the worker. The interface is compatible with ProgressiveMeshGenerator.
  */
-class _OgreExport QueuedProgressiveMeshGenerator :
+class QueuedProgressiveMeshGenerator :
 	public ProgressiveMeshGeneratorBase
 {
 public:
