@@ -30,6 +30,8 @@
 #include "OgreConfigurator.h"
 #include "MeshSerializerListener.h"
 
+#include "SceneManagers/EmberPagingSceneManager/include/EmberPagingSceneManager.h"
+
 #include "services/EmberServices.h"
 #include "services/config/ConfigService.h"
 #include "services/input/Input.h"
